@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dist-desktop/
+target/
+coverage/
+.env
+.env.*.local
+.env.local
+*.log
+*.exe
+*.msi
+*.tsbuildinfo
+
+# Tauri 按构建目标生成的文件
+apps/desktop/src-tauri/gen/schemas/
