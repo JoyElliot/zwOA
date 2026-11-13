@@ -43,7 +43,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; }
+body { margin: 0; }
 a { color: inherit; text-decoration: none; }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -88,6 +88,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .brand strong { display: block; font-size: 14px; }
 .brand small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
 .header-spacer { flex: 1 1 auto; min-width: 0; }
+.header-spacer[data-tauri-drag-region] { app-region: drag; }
 .header-actions { display: flex; align-items: center; flex: 0 0 auto; gap: 12px; padding: 0 12px; }
 .service-status { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .theme-toggle {
@@ -104,6 +105,38 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   cursor: pointer;
 }
 .theme-toggle:hover { background: var(--hover); color: var(--text); }
+.window-controls {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  user-select: none;
+}
+.window-controls button {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.window-controls button:focus-visible { outline-offset: -3px; }
+.window-controls button:hover { background: var(--hover); color: var(--text); }
+.window-controls .window-close:hover { background: #c42b3c; color: #fff; }
+.window-action-error {
+  position: absolute;
+  top: 100%;
+  right: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 13px;
+  white-space: nowrap;
+}
 .sidebar { background: var(--surface); border-right: 1px solid var(--line); padding: 12px; }
 .navigation { display: flex; flex-direction: column; gap: 5px; }
 .navigation a {
@@ -156,7 +189,7 @@ h1 { font-size: clamp(27px, 3.5vw, 38px); letter-spacing: 0.025em; }
   .module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 640px) {
   .shell { display: block; }
   .sidebar { padding: 6px 12px; border-right: 0; border-bottom: 1px solid var(--line); }
   .brand { flex-basis: auto; padding: 0 12px; border-right: 0; }

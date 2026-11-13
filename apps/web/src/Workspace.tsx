@@ -3,6 +3,7 @@ import { Badge, Button, Card } from 'antd';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, Route, Routes } from 'react-router';
 import { getWorkbenchOverview, type WorkbenchOverview } from './api/workbench';
+import { DesktopWindowControls, TitlebarDragRegion } from './DesktopTitlebar';
 import { modules, type WorkspaceModule } from './modules';
 
 type Connection =
@@ -40,7 +41,7 @@ export function Workspace({ dark, onToggleTheme }: { dark: boolean; onToggleThem
           <span className="brand-mark" aria-hidden="true">中</span>
           <span><strong>中网联合</strong><small>OA / CRM</small></span>
         </Link>
-        <div className="header-spacer" />
+        <TitlebarDragRegion />
         <div className="header-actions">
           <div className="service-status" role="status">
             <Badge status={connectionLabel.status} text={connectionLabel.label} />
@@ -61,6 +62,7 @@ export function Workspace({ dark, onToggleTheme }: { dark: boolean; onToggleThem
             {dark ? <SunOutlined /> : <MoonOutlined />}
           </button>
         </div>
+        <DesktopWindowControls />
       </header>
       <aside className="sidebar">
         <nav className="navigation" aria-label="业务导航">
