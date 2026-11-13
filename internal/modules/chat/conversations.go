@@ -3,7 +3,6 @@ package chat
 import (
 	"context"
 	"database/sql"
-	_ "embed"
 	"errors"
 	"fmt"
 	"regexp"
@@ -11,9 +10,6 @@ import (
 	"time"
 	"unicode/utf8"
 )
-
-//go:embed schema.sql
-var Schema string
 
 const Permission = "chat.access"
 const messagePage = 50

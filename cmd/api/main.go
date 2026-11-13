@@ -11,8 +11,11 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/JoyElliot/zwOA/internal/api"
+	"github.com/JoyElliot/zwOA/internal/modules/chat"
 	"github.com/JoyElliot/zwOA/internal/modules/organization"
 	"github.com/JoyElliot/zwOA/internal/platform/httpserver"
+	"github.com/JoyElliot/zwOA/internal/platform/sqlite"
 	"golang.org/x/term"
 )
 
@@ -38,15 +41,16 @@ func run() error {
 	if len(os.Args) > 1 && (len(os.Args) != 4 || os.Args[1] != "init-admin") {
 		return errors.New(`用法：go run ./cmd/api init-admin <登录名> "<姓名>"`)
 	}
-	store, err := organization.Open(ctx, path)
+	db, err := sqlite.Open(ctx, path)
 	if err != nil {
 		return fmt.Errorf("打开数据库：%w", err)
 	}
-	defer store.Close()
+	defer db.Close()
+	accounts := organization.New(db)
 	if len(os.Args) > 1 {
-		return initializeAdmin(ctx, store, os.Args[2], os.Args[3])
+		return initializeAdmin(ctx, accounts, os.Args[2], os.Args[3])
 	}
-	server := httpserver.New(httpserver.ConfigFromEnv(), store)
+	server := api.New(httpserver.ConfigFromEnv(), accounts, chat.New(db))
 	if err := server.Start(); err != nil {
 		return err
 	}

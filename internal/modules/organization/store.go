@@ -3,20 +3,10 @@ package organization
 import (
 	"context"
 	"database/sql"
-	_ "embed"
 	"errors"
-	"fmt"
-	"net/url"
-	"os"
-	"path/filepath"
-	"strings"
 
-	"github.com/JoyElliot/zwOA/internal/modules/chat"
 	"modernc.org/sqlite"
 )
-
-//go:embed schema.sql
-var schema string
 
 var (
 	ErrInvalid      = errors.New("输入无效")
@@ -36,73 +26,8 @@ type Store struct {
 	attempts  loginAttempts
 }
 
-func Open(ctx context.Context, path string) (*Store, error) {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		return nil, err
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
-		return nil, err
-	}
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0600)
-	if err != nil {
-		return nil, err
-	}
-	if err := file.Close(); err != nil {
-		return nil, err
-	}
-	uriPath := filepath.ToSlash(path)
-	if !strings.HasPrefix(uriPath, "/") {
-		uriPath = "/" + uriPath
-	}
-	uri := url.URL{Scheme: "file", Path: uriPath, RawQuery: "_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)"}
-	db, err := sql.Open("sqlite", uri.String())
-	if err != nil {
-		return nil, err
-	}
-	db.SetMaxOpenConns(1)
-	store := &Store{db: db, hashSlots: make(chan struct{}, 4)}
-	if err := store.migrate(ctx); err != nil {
-		_ = db.Close()
-		return nil, err
-	}
-	return store, nil
-}
-
-func (s *Store) Close() error { return s.db.Close() }
-
-func (s *Store) Chat() *chat.Store { return chat.New(s.db) }
-
-func (s *Store) migrate(ctx context.Context) error {
-	return s.transaction(ctx, func(tx *sql.Tx) error {
-		var version int
-		if err := tx.QueryRowContext(ctx, `PRAGMA user_version`).Scan(&version); err != nil {
-			return err
-		}
-		if version == 0 {
-			if _, err := tx.ExecContext(ctx, schema); err != nil {
-				return err
-			}
-			version = 1
-		}
-		switch version {
-		case 1:
-			if _, err := tx.ExecContext(ctx, chat.Schema); err != nil {
-				return err
-			}
-			fallthrough
-		case 2:
-			if _, err := tx.ExecContext(ctx, `UPDATE accounts SET must_change_password = 0 WHERE must_change_password = 1`); err != nil {
-				return err
-			}
-			_, err := tx.ExecContext(ctx, `PRAGMA user_version = 3`)
-			return err
-		case 3:
-			return nil
-		default:
-			return fmt.Errorf("无法读取数据库版本 %d", version)
-		}
-	})
+func New(db *sql.DB) *Store {
+	return &Store{db: db, hashSlots: make(chan struct{}, 4)}
 }
 
 func (s *Store) transaction(ctx context.Context, fn func(*sql.Tx) error) error {

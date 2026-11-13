@@ -1,4 +1,4 @@
-package httpserver
+package api
 
 import (
 	"strconv"
@@ -8,11 +8,9 @@ import (
 	"github.com/gogf/gf/v2/net/ghttp"
 )
 
-func bindChat(server *ghttp.Server, accounts *organization.Store, config Config) {
-	api := organizationAPI{store: accounts, config: config}
-	store := accounts.Chat()
+func bindChat(server *ghttp.Server, store *chat.Store, auth authentication) {
 	handle := func(fn func(*ghttp.Request, int64)) ghttp.HandlerFunc {
-		return api.authorized(false, func(r *ghttp.Request, account organization.Account) {
+		return auth.authorized(false, func(r *ghttp.Request, account organization.Account) {
 			allowed, err := store.CanAccess(r.Context(), account.ID)
 			if err != nil {
 				writeError(r, err)

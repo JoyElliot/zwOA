@@ -1,4 +1,4 @@
-package httpserver
+package api
 
 import (
 	"encoding/json"
@@ -13,19 +13,22 @@ import (
 
 	"github.com/JoyElliot/zwOA/internal/modules/chat"
 	"github.com/JoyElliot/zwOA/internal/modules/organization"
+	"github.com/JoyElliot/zwOA/internal/platform/httpserver"
+	"github.com/JoyElliot/zwOA/internal/platform/sqlite"
 )
 
 func TestOrganizationAccess(t *testing.T) {
 	const desktopOrigin = "http://tauri.localhost"
-	store, err := organization.Open(t.Context(), filepath.Join(t.TempDir(), "test.db"))
+	db, err := sqlite.Open(t.Context(), filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = store.Close() })
+	t.Cleanup(func() { _ = db.Close() })
+	store := organization.New(db)
 	if err := store.Bootstrap(t.Context(), "root-admin", "管理员", "bootstrap-password"); err != nil {
 		t.Fatal(err)
 	}
-	server := New(Config{Address: "127.0.0.1:0", AllowedOrigins: []string{desktopOrigin}, SecureCookies: true}, store)
+	server := New(httpserver.Config{Address: "127.0.0.1:0", AllowedOrigins: []string{desktopOrigin}, SecureCookies: true}, store, chat.New(db))
 	if err := server.Start(); err != nil {
 		t.Fatal(err)
 	}
