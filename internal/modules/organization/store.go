@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/JoyElliot/zwOA/internal/modules/chat"
 	"modernc.org/sqlite"
 )
 
@@ -70,20 +71,28 @@ func Open(ctx context.Context, path string) (*Store, error) {
 
 func (s *Store) Close() error { return s.db.Close() }
 
+func (s *Store) Chat() *chat.Store { return chat.New(s.db) }
+
 func (s *Store) migrate(ctx context.Context) error {
 	return s.transaction(ctx, func(tx *sql.Tx) error {
 		var version int
 		if err := tx.QueryRowContext(ctx, `PRAGMA user_version`).Scan(&version); err != nil {
 			return err
 		}
-		switch version {
-		case 0:
+		if version == 0 {
 			if _, err := tx.ExecContext(ctx, schema); err != nil {
 				return err
 			}
-			_, err := tx.ExecContext(ctx, `PRAGMA user_version = 1`)
-			return err
+			version = 1
+		}
+		switch version {
 		case 1:
+			if _, err := tx.ExecContext(ctx, chat.Schema); err != nil {
+				return err
+			}
+			_, err := tx.ExecContext(ctx, `PRAGMA user_version = 2`)
+			return err
+		case 2:
 			return nil
 		default:
 			return fmt.Errorf("无法读取数据库版本 %d", version)

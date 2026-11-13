@@ -57,6 +57,7 @@
 | `desktop` | Windows 桌面壳、Tauri 配置、原生集成和打包 |
 | `mobile` | Android、iOS 客户端及移动平台集成 |
 | `workbench` | 工作台概览和模块导航 |
+| `chat` | 单聊、群聊、会话记录和未读状态 |
 | `crm` | 客户、联系人和销售商机 |
 | `approvals` | 审批申请、待办和流程记录 |
 | `organization` | 部门、成员、角色和数据访问范围 |

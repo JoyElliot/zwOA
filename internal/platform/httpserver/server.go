@@ -33,6 +33,7 @@ func New(config Config, store *organization.Store) *ghttp.Server {
 	})
 	server.BindMiddleware("/api/v1/*", allowOrigins(config.AllowedOrigins))
 	bindOrganization(server, store, config)
+	bindChat(server, store, config)
 	server.Group("/api/v1", func(group *ghttp.RouterGroup) {
 		group.Middleware(ghttp.MiddlewareHandlerResponse)
 		group.Bind(workbench.Controller{})

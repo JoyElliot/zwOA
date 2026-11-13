@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/JoyElliot/zwOA/internal/modules/chat"
 	"github.com/JoyElliot/zwOA/internal/modules/organization"
 )
 
@@ -112,10 +114,57 @@ func TestOrganizationAccess(t *testing.T) {
 		t.Fatalf("团队和模块权限范围错误：%+v", session.Data)
 	}
 	call("PUT", "/admin/modules/approvals/admins", `{"adminIds":[2]}`, nil, member, 403)
+	call("GET", "/chat/conversations", "", nil, member, 403)
+	call("PUT", "/admin/groups/1", `{"name":"审批成员","permissions":["approvals.access","chat.access"]}`, admin, nil, 200)
+	call("GET", "/chat/contacts?q=成员", "", admin, nil, 200)
+	_, data = call("POST", "/chat/conversations", `{"memberIds":[2],"requestKey":"00000000000000000000000000000001"}`, admin, nil, 200)
+	var conversation struct{ Data struct{ ID int64 } }
+	if err := json.Unmarshal(data, &conversation); err != nil || conversation.Data.ID <= 0 {
+		t.Fatalf("创建单聊失败：%s", data)
+	}
+	_, data = call("POST", "/chat/conversations", `{"memberIds":[1],"requestKey":"00000000000000000000000000000002"}`, nil, member, 200)
+	if !strings.Contains(string(data), fmt.Sprintf(`"id":%d`, conversation.Data.ID)) {
+		t.Fatalf("双方发起单聊返回不同会话：%s", data)
+	}
+	thread := fmt.Sprintf("/chat/conversations/%d", conversation.Data.ID)
+	const send = `{"text":"你好","requestKey":"00000000000000000000000000000003"}`
+	_, first := call("POST", thread+"/messages", send, admin, nil, 200)
+	_, retry := call("POST", thread+"/messages", send, admin, nil, 200)
+	if string(first) != string(retry) {
+		t.Fatalf("重试发送返回了不同的消息：%s, %s", first, retry)
+	}
+	_, data = call("GET", thread+"/messages", "", nil, member, 200)
+	var history struct{ Data chat.MessagePage }
+	if err := json.Unmarshal(data, &history); err != nil || len(history.Data.Messages) != 1 || history.Data.Messages[0].Text != "你好" {
+		t.Fatalf("会话历史不正确：%s", data)
+	}
+	checkUnread := func(want int) {
+		t.Helper()
+		_, data := call("GET", "/chat/conversations", "", nil, member, 200)
+		var result struct{ Data []chat.Conversation }
+		if err := json.Unmarshal(data, &result); err != nil || len(result.Data) != 1 || result.Data[0].Unread != want {
+			t.Fatalf("未读数应为 %d：%s", want, data)
+		}
+	}
+	checkUnread(1)
+	call("PUT", thread+"/read", `{"messageId":999}`, nil, member, 404)
+	call("PUT", thread+"/read", fmt.Sprintf(`{"messageId":%d}`, history.Data.Messages[0].ID), nil, member, 200)
+	checkUnread(0)
+	call("POST", "/admin/accounts", `{"username":"outsider","name":"其他人","password":"temporary-password","active":true,"groupIds":[1]}`, admin, nil, 200)
+	res, _ = call("POST", "/auth/login", `{"username":"outsider","password":"temporary-password"}`, nil, nil, 200)
+	outsider := res.Cookies()[0]
+	call("GET", thread+"/messages", "", outsider, nil, 403)
+	call("PUT", "/auth/password", `{"current":"temporary-password","next":"replacement-password"}`, outsider, nil, 200)
+	res, _ = call("POST", "/auth/login", `{"username":"outsider","password":"replacement-password"}`, nil, nil, 200)
+	outsider = res.Cookies()[0]
+	call("GET", thread+"/messages", "", outsider, nil, 404)
+	call("POST", thread+"/messages", send, outsider, nil, 404)
+	call("PUT", thread+"/read", `{"messageId":1}`, outsider, nil, 404)
 	call("PUT", "/admin/accounts/2", `{"name":"成员","active":false,"groupIds":[1]}`, admin, nil, 200)
 	call("PUT", "/admin/accounts/2", `{"name":"成员","active":true,"groupIds":[1]}`, admin,
 		map[string]string{"X-ZwOA-Revision": strconv.FormatInt(revision-1, 10)}, 412)
 	call("GET", "/auth/session", "", nil, member, 401)
+	call("GET", "/chat/conversations", "", nil, member, 401)
 	call("POST", "/auth/logout", "", admin, nil, 200)
 	call("GET", "/admin/overview", "", admin, nil, 401)
 }

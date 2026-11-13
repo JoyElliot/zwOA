@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/JoyElliot/zwOA/internal/modules/chat"
 	"github.com/JoyElliot/zwOA/internal/modules/organization"
 	"github.com/gogf/gf/v2/net/ghttp"
 )
@@ -240,15 +241,15 @@ func writeError(r *ghttp.Request, err error) {
 	case errors.As(err, &tooLarge):
 		status = http.StatusRequestEntityTooLarge
 		message = "请求内容过大"
-	case errors.Is(err, organization.ErrInvalid), errors.Is(err, organization.ErrPassword):
+	case errors.Is(err, organization.ErrInvalid), errors.Is(err, organization.ErrPassword), errors.Is(err, chat.ErrInvalid):
 		status = http.StatusBadRequest
 	case errors.Is(err, organization.ErrUnauthorized), errors.Is(err, organization.ErrCredentials):
 		status = http.StatusUnauthorized
 	case errors.Is(err, organization.ErrForbidden):
 		status = http.StatusForbidden
-	case errors.Is(err, organization.ErrNotFound):
+	case errors.Is(err, organization.ErrNotFound), errors.Is(err, chat.ErrMissing):
 		status = http.StatusNotFound
-	case errors.Is(err, organization.ErrConflict):
+	case errors.Is(err, organization.ErrConflict), errors.Is(err, chat.ErrConflict):
 		status = http.StatusConflict
 	case errors.Is(err, organization.ErrStale):
 		status = http.StatusPreconditionFailed
@@ -256,7 +257,7 @@ func writeError(r *ghttp.Request, err error) {
 		status = http.StatusTooManyRequests
 		r.Response.Header().Set("Retry-After", "60")
 	default:
-		log.Printf("组织与权限接口失败：%v", err)
+		log.Printf("业务接口失败：%v", err)
 		message = "服务暂时不可用"
 	}
 	r.Response.Header().Set("Cache-Control", "no-store")

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/JoyElliot/zwOA/internal/modules/chat"
 )
 
 type Module struct {
@@ -14,6 +16,7 @@ type Module struct {
 }
 
 var modules = []Module{
+	{Key: "chat", Name: "消息", Permission: chat.Permission},
 	{Key: "crm", Name: "客户管理", Permission: "crm.access"},
 	{Key: "approvals", Name: "办公审批", Permission: "approvals.access"},
 	{Key: "organization", Name: "组织与权限", Permission: "organization.access"},
