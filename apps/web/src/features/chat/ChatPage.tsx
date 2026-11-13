@@ -9,10 +9,8 @@ import { getConversations, type Conversation } from './api';
 import { ConversationThread } from './ConversationThread';
 import { UserAvatar } from '../../shared/ui/UserAvatar';
 import { CreateConversation } from './CreateConversation';
+import { formatChatTime } from './chatTime';
 import './chat.css';
-
-const clock = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit' });
-const calendar = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric' });
 
 export default function ChatPage({ actor }: { actor: number }) {
   const { conversationId } = useParams();
@@ -57,7 +55,7 @@ export default function ChatPage({ actor }: { actor: number }) {
   const selection = conversations?.find(({ id }) => String(id) === conversationId);
   const term = search.trim().toLocaleLowerCase('zh-CN');
   const visible = conversations?.filter((item) => item.title.toLocaleLowerCase('zh-CN').includes(term));
-  const now = new Date().toDateString();
+  const now = new Date();
 
   return (
     <div className={`chat-layout${conversationId ? ' chat-show-thread' : ''}`}>
@@ -81,26 +79,28 @@ export default function ChatPage({ actor }: { actor: number }) {
           {visible?.length === 0 && <Empty className="chat-list-empty" image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={term ? '没有匹配的会话' : '暂无会话'} />}
           <ul className="chat-list">
-            {visible?.map((item) => (
-              <li key={item.id}>
-                <Link className={`chat-row${selection?.id === item.id ? ' chat-row-selected' : ''}`}
-                  to={`/chat/${item.id}`} aria-current={selection?.id === item.id ? 'page' : undefined}>
-                  <UserAvatar name={item.title} version={item.avatarVersion} group={item.group} className="chat-avatar" size={42} />
-                  <div className="chat-row-copy">
-                    <div className="chat-row-top">
-                      <strong title={item.title}>{item.title}</strong>
-                      <time dateTime={new Date(item.updatedAt).toISOString()}>
-                        {new Date(item.updatedAt).toDateString() === now ? clock.format(item.updatedAt) : calendar.format(item.updatedAt)}
-                      </time>
+            {visible?.map((item) => {
+              const lastMessage = new Date(item.updatedAt);
+              const time = item.lastText ? formatChatTime(lastMessage, now) : '';
+              return (
+                <li key={item.id}>
+                  <Link className={`chat-row${selection?.id === item.id ? ' chat-row-selected' : ''}`}
+                    to={`/chat/${item.id}`} aria-current={selection?.id === item.id ? 'page' : undefined}>
+                    <UserAvatar name={item.title} version={item.avatarVersion} group={item.group} className="chat-avatar" size={42} />
+                    <div className="chat-row-copy">
+                      <div className="chat-row-top">
+                        <strong title={item.title}>{item.title}</strong>
+                        {time && <time dateTime={lastMessage.toISOString()}>{time}</time>}
+                      </div>
+                      <div className="chat-row-bottom">
+                        <span>{item.lastText ? `${item.group ? `${item.lastSender}：` : ''}${item.lastText}` : '暂无消息'}</span>
+                        {item.unread > 0 && <Badge count={item.unread} overflowCount={99} title={`${item.unread} 条未读`} />}
+                      </div>
                     </div>
-                    <div className="chat-row-bottom">
-                      <span>{item.lastText ? `${item.group ? `${item.lastSender}：` : ''}${item.lastText}` : '暂无消息'}</span>
-                      {item.unread > 0 && <Badge count={item.unread} overflowCount={99} title={`${item.unread} 条未读`} />}
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            ))}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </section>
       </ProCard>

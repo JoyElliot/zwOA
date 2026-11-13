@@ -91,6 +91,7 @@
   --chat-field: color-mix(in srgb, var(--canvas) 42%, var(--surface));
   --chat-blue: #186bd4;
   --chat-blue-deep: #115fc5;
+  --chat-time-incoming: light-dark(#667287, #94a0af);
   background: var(--canvas);
 }
 .chat-thread .chat-avatar { background: var(--chat-blue); color: #fff; }
@@ -140,14 +141,14 @@
   border-radius: 4px 16px 16px;
   background: var(--surface);
   color: var(--text);
-  font-size: 15px;
-  line-height: 22px;
+  font-size: 11px;
+  line-height: 14px;
   box-shadow: 0 1px 2px var(--shadow), inset 0 0 0 1px var(--line);
 }
-.chat-bubble-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-bubble-text { font-size: 15px; line-height: 22px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .chat-message-own .chat-bubble {
   border-radius: 16px 4px 16px 16px;
-  background: linear-gradient(180deg, var(--chat-blue), var(--chat-blue-deep));
+  background: linear-gradient(180deg, var(--chat-blue), #0e50ad);
   color: #fff;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--chat-blue-deep) 20%, transparent);
 }
@@ -156,14 +157,12 @@
   align-items: center;
   gap: 3px;
   margin-inline-start: 8px;
-  font-size: 11px;
-  line-height: 14px;
   white-space: nowrap;
   user-select: none;
 }
 .chat-bubble-meta-space { visibility: hidden; }
-.chat-bubble-meta-visible { position: absolute; inset-inline-end: 12px; bottom: 7px; color: var(--muted); }
-.chat-message-own .chat-bubble-meta-visible { color: #d5e7ff; }
+.chat-bubble-meta-visible { position: absolute; inset-inline-end: 12px; bottom: 7px; color: var(--chat-time-incoming); }
+.chat-message-own .chat-bubble-meta-visible { color: #b8cdeb; }
 .chat-sent { display: inline-flex; }
 .chat-send-overlay {
   position: fixed;

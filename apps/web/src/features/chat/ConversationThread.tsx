@@ -5,11 +5,10 @@ import { errorMessage } from '../../shared/api/client';
 import { UserAvatar } from '../../shared/ui/UserAvatar';
 import { ChatComposer } from './ChatComposer';
 import { getMessages, markRead, newRequestKey, sendMessage, type Conversation, type Message } from './api';
+import { formatChatTime } from './chatTime';
 import { animateSentMessage, captureDraft, captureVisibleMessages } from './messageMotion';
 
-const clock = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 const fullTime = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long', timeStyle: 'short' });
-const monthDay = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric' });
 
 function groupMessages(messages: Message[]) {
   const groups: { senderId: number; day: string; messages: Message[] }[] = [];
@@ -27,9 +26,7 @@ function groupMessages(messages: Message[]) {
 
 function MessageBubble({ message, own, today }: { message: Message; own: boolean; today: Date }) {
   const date = new Date(message.sentAt);
-  const time = clock.format(date);
-  const label = date.toDateString() === today.toDateString() ? time
-    : date.getFullYear() === today.getFullYear() ? `${monthDay.format(date)} ${time}` : fullTime.format(date);
+  const label = formatChatTime(date, today);
 
   return (
     <div className="chat-bubble">
@@ -38,7 +35,7 @@ function MessageBubble({ message, own, today }: { message: Message; own: boolean
         {label}{own && <CheckOutlined />}
       </span>
       <span className="chat-bubble-meta chat-bubble-meta-visible">
-        <time dateTime={date.toISOString()} title={fullTime.format(date)}>{label}</time>
+        {label && <time dateTime={date.toISOString()} title={fullTime.format(date)}>{label}</time>}
         {own && <span className="chat-sent" role="img" aria-label="已发送" title="已发送"><CheckOutlined /></span>}
       </span>
     </div>
