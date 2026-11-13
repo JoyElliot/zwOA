@@ -5,6 +5,7 @@ import { errorMessage } from '../../shared/api/client';
 import { UserAvatar } from '../../shared/ui/UserAvatar';
 import { ChatComposer } from './ChatComposer';
 import { getMessages, markRead, newRequestKey, sendMessage, type Conversation, type Message } from './api';
+import { animateSentMessage, captureDraft, captureVisibleMessages } from './messageMotion';
 
 const clock = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 const fullTime = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long', timeStyle: 'short' });
@@ -42,7 +43,14 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [sendError, setSendError] = useState('');
+  const [sent, setSent] = useState<{
+    id: number;
+    source: ReturnType<typeof captureDraft>;
+    previousRows?: ReturnType<typeof captureVisibleMessages>;
+  } | null>(null);
   const history = useRef<HTMLDivElement>(null);
+  const messageList = useRef<HTMLDivElement>(null);
+  const sentRow = useRef<HTMLDivElement>(null);
   const initialScroll = useRef(true);
   const atBottom = useRef(true);
   const historyAnchor = useRef<number | null>(null);
@@ -134,6 +142,26 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
     initialScroll.current = false;
   }, [messages]);
 
+  useEffect(() => {
+    const panel = history.current;
+    if (!panel) return;
+    const observer = new ResizeObserver(() => {
+      if (atBottom.current) panel.scrollTop = panel.scrollHeight;
+    });
+    observer.observe(panel);
+    return () => observer.disconnect();
+  }, []);
+
+  useLayoutEffect(() => {
+    const panel = history.current;
+    const bubble = sentRow.current?.querySelector<HTMLElement>('.chat-bubble');
+    if (!sent || !panel || !bubble) return;
+    panel.scrollTop = panel.scrollHeight;
+    if (sent.source && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return animateSentMessage(sent.source, bubble, panel, sent.previousRows);
+    }
+  }, [sent]);
+
   async function loadOlder() {
     const signal = requests.current?.signal;
     const before = messages[0]?.id;
@@ -155,7 +183,7 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
     }
   }
 
-  async function send() {
+  async function send(input: HTMLTextAreaElement | null) {
     const text = draft.trim();
     const signal = requests.current?.signal;
     if (!text || sendBusy.current || !signal || signal.aborted) return;
@@ -167,6 +195,9 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
       const message = await sendMessage(id, lastSend.current);
       lastSend.current = null;
       if (signal.aborted) return;
+      const source = captureDraft(input);
+      const previousRows = source && atBottom.current ? captureVisibleMessages(messageList.current, history.current) : undefined;
+      setSent({ id: message.id, source, previousRows });
       setDraft('');
       atBottom.current = true;
       setMessages((current) => current.some(({ id }) => id === message.id) ? current : [...current, message]);
@@ -205,7 +236,7 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
       {error && <Alert className="chat-error" type="error" showIcon title={error} action={
         <Button size="small" onClick={() => { if (requests.current) void sync(requests.current.signal); }}>重试</Button>
       } />}
-      <div className="chat-history" ref={history} onScroll={(event) => {
+      <div className="chat-history chat-scrollbar" ref={history} onScroll={(event) => {
         const panel = event.currentTarget;
         atBottom.current = panel.scrollHeight - panel.scrollTop - panel.clientHeight < 40;
         if (requests.current) void readVisible(requests.current.signal);
@@ -215,14 +246,15 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
         {initialized && messages.length === 0 && <div className="chat-center">
           <Empty image={<MessageOutlined />} description="还没有消息，发一条消息开始聊天" />
         </div>}
-        <div className="chat-messages" role="log" aria-label="消息记录">
+        <div className="chat-messages" ref={messageList} role="log" aria-label="消息记录">
           {messages.map((message, index) => {
             const previous = messages[index - 1];
             const repeated = previous?.senderId === message.senderId &&
               new Date(previous.sentAt).toDateString() === new Date(message.sentAt).toDateString();
             const own = message.senderId === actor;
             return (
-              <div key={message.id} className={`chat-message${own ? ' chat-message-own' : ''}${repeated ? ' chat-message-continuation' : ''}`}>
+              <div key={message.id} ref={sent?.id === message.id ? sentRow : undefined}
+                className={`chat-message${own ? ' chat-message-own' : ''}${repeated ? ' chat-message-continuation' : ''}`}>
                 <div className="chat-message-avatar" aria-hidden="true">
                   {!repeated && <UserAvatar name={message.sender} version={avatars.get(message.senderId)} className="chat-avatar" size={36} />}
                 </div>
@@ -235,7 +267,8 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
           })}
         </div>
       </div>
-      <ChatComposer draft={draft} onDraftChange={setDraft} onSend={() => void send()} sending={sending} ready={initialized} error={sendError} />
+      <ChatComposer draft={draft} onDraftChange={setDraft} onSend={(input) => void send(input)}
+        sending={sending} ready={initialized} error={sendError} />
     </section>
   );
 }
