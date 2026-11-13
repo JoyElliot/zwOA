@@ -12,6 +12,7 @@ export interface Account {
 export type TeamKind = 'team' | 'project';
 
 export interface Identity extends Account {
+  avatarVersion: string;
   permissions: string[];
   teams: { id: number; name: string; kind: TeamKind; admin: boolean }[];
   adminModules: string[];

@@ -32,14 +32,15 @@ type Contact struct {
 }
 
 type Conversation struct {
-	ID          int64  `json:"id"`
-	Title       string `json:"title"`
-	Group       bool   `json:"group"`
-	MemberCount int    `json:"memberCount"`
-	LastText    string `json:"lastText"`
-	LastSender  string `json:"lastSender"`
-	UpdatedAt   int64  `json:"updatedAt" dc:"Unix 毫秒时间戳"`
-	Unread      int    `json:"unread"`
+	ID            int64  `json:"id"`
+	Title         string `json:"title"`
+	Group         bool   `json:"group"`
+	MemberCount   int    `json:"memberCount"`
+	LastText      string `json:"lastText"`
+	LastSender    string `json:"lastSender"`
+	UpdatedAt     int64  `json:"updatedAt" dc:"Unix 毫秒时间戳"`
+	Unread        int    `json:"unread"`
+	AvatarVersion string `json:"avatarVersion" dc:"单聊对方的头像版本；空字符串表示默认头像"`
 }
 
 type CreateInput struct {
@@ -57,8 +58,14 @@ type Message struct {
 }
 
 type MessagePage struct {
-	Messages []Message `json:"messages"`
-	HasMore  bool      `json:"hasMore"`
+	Messages []Message      `json:"messages"`
+	HasMore  bool           `json:"hasMore"`
+	Avatars  []MemberAvatar `json:"avatars" dc:"当前会话成员的自定义头像"`
+}
+
+type MemberAvatar struct {
+	AccountID int64  `json:"accountId"`
+	Version   string `json:"version"`
 }
 
 // 可搜索的同事与可加入会话的账户使用相同的权限条件。
@@ -101,12 +108,15 @@ func (s *Store) Contacts(ctx context.Context, actor int64, query string) ([]Cont
 func (s *Store) Conversations(ctx context.Context, actor int64) ([]Conversation, error) {
 	rows, err := s.db.QueryContext(ctx, `SELECT c.id,
 		CASE WHEN c.direct_key IS NULL THEN c.title ELSE
-			(SELECT a.name FROM chat_members other JOIN accounts a ON a.id = other.account_id
-			 WHERE other.conversation_id = c.id AND other.account_id <> m.account_id) END,
+			COALESCE(peer.name, '') END,
 		c.direct_key IS NULL, (SELECT COUNT(*) FROM chat_members WHERE conversation_id = c.id),
 		COALESCE(last.text, ''), COALESCE(sender.name, ''), COALESCE(last.sent_at, c.created_at),
-		(SELECT COUNT(*) FROM chat_messages WHERE conversation_id = c.id AND id > m.last_read_id AND sender_id <> m.account_id)
+		(SELECT COUNT(*) FROM chat_messages WHERE conversation_id = c.id AND id > m.last_read_id AND sender_id <> m.account_id),
+		COALESCE(avatar.version, '')
 		FROM chat_members m JOIN chat_conversations c ON c.id = m.conversation_id
+		LEFT JOIN chat_members other ON c.direct_key IS NOT NULL AND other.conversation_id = c.id AND other.account_id <> m.account_id
+		LEFT JOIN accounts peer ON peer.id = other.account_id
+		LEFT JOIN account_avatars avatar ON avatar.account_id = peer.id
 		LEFT JOIN chat_messages last ON last.id = c.last_message_id AND last.conversation_id = c.id
 		LEFT JOIN accounts sender ON sender.id = last.sender_id
 		WHERE m.account_id = ? ORDER BY COALESCE(last.sent_at, c.created_at) DESC, c.last_message_id DESC, c.id DESC`, actor)
@@ -117,7 +127,7 @@ func (s *Store) Conversations(ctx context.Context, actor int64) ([]Conversation,
 	conversations := []Conversation{}
 	for rows.Next() {
 		var c Conversation
-		if err := rows.Scan(&c.ID, &c.Title, &c.Group, &c.MemberCount, &c.LastText, &c.LastSender, &c.UpdatedAt, &c.Unread); err != nil {
+		if err := rows.Scan(&c.ID, &c.Title, &c.Group, &c.MemberCount, &c.LastText, &c.LastSender, &c.UpdatedAt, &c.Unread, &c.AvatarVersion); err != nil {
 			return nil, err
 		}
 		conversations = append(conversations, c)

@@ -39,6 +39,8 @@ func checkOpenAPI(t *testing.T, client *http.Client, url string) {
 		"/auth/session":                     {"get"},
 		"/auth/logout":                      {"post"},
 		"/auth/password":                    {"put"},
+		"/auth/avatar":                      {"put"},
+		"/auth/avatars/{version}":           {"get"},
 		"/chat/contacts":                    {"get"},
 		"/chat/conversations":               {"get", "post"},
 		"/chat/conversations/{id}/messages": {"get", "post"},

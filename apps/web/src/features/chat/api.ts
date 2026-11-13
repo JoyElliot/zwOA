@@ -15,6 +15,7 @@ export interface Conversation {
   lastSender: string;
   updatedAt: number;
   unread: number;
+  avatarVersion: string;
 }
 
 export interface Message {
@@ -28,6 +29,7 @@ export interface Message {
 interface MessagePage {
   messages: Message[];
   hasMore: boolean;
+  avatars?: { accountId: number; version: string }[];
 }
 
 export function newRequestKey() {

@@ -79,7 +79,10 @@
 }
 
 .profile-heading h2, .profile-team-name { min-width: 0; overflow-wrap: anywhere; }
+.profile-heading-details { min-width: 0; }
 .profile-avatar.ant-avatar { flex: none; background: var(--selected); color: var(--accent); }
+.profile-avatar-edit.ant-btn { padding-inline: 0; }
+.profile-avatar-preview { display: grid; justify-items: center; gap: 16px; padding-block: 20px; }
 .profile-teams { margin: 0; padding: 0; list-style: none; }
 .profile-teams li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .profile-teams li + li { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }

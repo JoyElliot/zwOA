@@ -6,7 +6,8 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { ApiError, errorMessage } from '../../shared/api/client';
 import { WorkspaceTitlebar } from '../../shared/ui/DesktopTitlebar';
 import { getConversations, type Conversation } from './api';
-import { ChatAvatar, ConversationThread } from './ConversationThread';
+import { ConversationThread } from './ConversationThread';
+import { UserAvatar } from '../../shared/ui/UserAvatar';
 import { CreateConversation } from './CreateConversation';
 import './chat.css';
 
@@ -84,7 +85,7 @@ export default function ChatPage({ actor }: { actor: number }) {
               <li key={item.id}>
                 <Link className={`chat-row${selection?.id === item.id ? ' chat-row-selected' : ''}`}
                   to={`/chat/${item.id}`} aria-current={selection?.id === item.id ? 'page' : undefined}>
-                  <ChatAvatar title={item.title} group={item.group} size={42} />
+                  <UserAvatar name={item.title} version={item.avatarVersion} group={item.group} className="chat-avatar" size={42} />
                   <div className="chat-row-copy">
                     <div className="chat-row-top">
                       <strong title={item.title}>{item.title}</strong>

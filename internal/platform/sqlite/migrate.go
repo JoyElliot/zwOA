@@ -16,6 +16,9 @@ var chatSchema string
 //go:embed migrations/003_clear_password_change.sql
 var clearPasswordChange string
 
+//go:embed migrations/004_account_avatars.sql
+var accountAvatars string
+
 func migrate(ctx context.Context, db *sql.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -46,7 +49,12 @@ func migrate(ctx context.Context, db *sql.DB) error {
 		if _, err := tx.ExecContext(ctx, `PRAGMA user_version = 3`); err != nil {
 			return err
 		}
+		fallthrough
 	case 3:
+		if _, err := tx.ExecContext(ctx, accountAvatars); err != nil {
+			return err
+		}
+	case 4:
 	default:
 		return fmt.Errorf("无法读取数据库版本 %d", version)
 	}

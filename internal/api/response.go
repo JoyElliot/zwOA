@@ -53,7 +53,8 @@ func writeError(r *ghttp.Request, err error) {
 	case errors.As(err, &tooLarge):
 		status = http.StatusRequestEntityTooLarge
 		message = "请求内容过大"
-	case errors.Is(err, organization.ErrInvalid), errors.Is(err, organization.ErrPassword), errors.Is(err, chat.ErrInvalid):
+	case errors.Is(err, organization.ErrInvalid), errors.Is(err, organization.ErrPassword),
+		errors.Is(err, organization.ErrAvatar), errors.Is(err, chat.ErrInvalid):
 		status = http.StatusBadRequest
 	case errors.Is(err, organization.ErrUnauthorized), errors.Is(err, organization.ErrCredentials):
 		status = http.StatusUnauthorized

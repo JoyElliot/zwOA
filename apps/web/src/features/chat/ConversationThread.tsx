@@ -1,21 +1,14 @@
-import { ArrowLeftOutlined, CheckOutlined, MessageOutlined, PhoneOutlined, SettingOutlined, TeamOutlined } from '@ant-design/icons';
-import { Alert, Avatar, Button, Empty, Spin, Tooltip } from 'antd';
+import { ArrowLeftOutlined, CheckOutlined, MessageOutlined, PhoneOutlined, SettingOutlined } from '@ant-design/icons';
+import { Alert, Button, Empty, Spin, Tooltip } from 'antd';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { errorMessage } from '../../shared/api/client';
+import { UserAvatar } from '../../shared/ui/UserAvatar';
 import { ChatComposer } from './ChatComposer';
 import { getMessages, markRead, newRequestKey, sendMessage, type Conversation, type Message } from './api';
 
 const clock = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 const fullTime = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long', timeStyle: 'short' });
 const monthDay = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric' });
-
-export function ChatAvatar({ title, group, size = 38, round = false }: { title: string; group?: boolean; size?: number; round?: boolean }) {
-  const useGroupIcon = group && !round;
-  return <Avatar className={round ? 'chat-avatar chat-avatar-round' : 'chat-avatar'} shape={round ? 'circle' : 'square'}
-    size={size} icon={useGroupIcon ? <TeamOutlined /> : undefined}>
-    {!useGroupIcon && Array.from(title.trim())[0]?.toUpperCase()}
-  </Avatar>;
-}
 
 function MessageBubble({ message, own, today }: { message: Message; own: boolean; today: Date }) {
   const date = new Date(message.sentAt);
@@ -41,6 +34,7 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
   conversation: Conversation; actor: number; onBack: () => void; onActivity: () => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [avatars, setAvatars] = useState(() => new Map<number, string>());
   const [draft, setDraft] = useState('');
   const [initialized, setInitialized] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -84,6 +78,11 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
       const previous = cursor.current;
       const page = await getMessages(id, signal, previous > 0 ? { after: previous } : undefined);
       if (signal.aborted) return;
+      if (page.avatars) {
+        const next = new Map(page.avatars.map(({ accountId, version }) => [accountId, version]));
+        setAvatars((current) => current.size === next.size && [...next].every(([accountId, version]) => current.get(accountId) === version)
+          ? current : next);
+      }
       if (previous === 0) setHasMore(page.hasMore);
       const latest = page.messages.at(-1);
       if (latest) {
@@ -185,7 +184,7 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
     <section className="chat-thread" aria-label="聊天内容">
       <header className="chat-conversation-title">
         <Button className="chat-back" type="text" icon={<ArrowLeftOutlined />} aria-label="返回会话" onClick={onBack} />
-        <ChatAvatar title={conversation.title} round size={28} />
+        <UserAvatar name={conversation.title} version={conversation.avatarVersion} group={conversation.group} className="chat-avatar" size={28} />
         <div className="chat-conversation-name">
           <h2 title={conversation.title}>{conversation.title}</h2>
           <span>{conversation.group ? `${conversation.memberCount} 位成员` : '单聊'}</span>
@@ -224,7 +223,9 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
             const own = message.senderId === actor;
             return (
               <div key={message.id} className={`chat-message${own ? ' chat-message-own' : ''}${repeated ? ' chat-message-continuation' : ''}`}>
-                <div className="chat-message-avatar" aria-hidden="true">{!repeated && <ChatAvatar title={message.sender} round size={36} />}</div>
+                <div className="chat-message-avatar" aria-hidden="true">
+                  {!repeated && <UserAvatar name={message.sender} version={avatars.get(message.senderId)} className="chat-avatar" size={36} />}
+                </div>
                 <div className="chat-message-content">
                   {!own && !repeated && <div className="chat-message-name">{message.sender}</div>}
                   <MessageBubble message={message} own={own} today={today} />

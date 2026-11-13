@@ -8,6 +8,7 @@
 - Windows 客户端通过 `POST /api/v1/auth/desktop/login` 获得 `data.token`，后续请求使用 `Authorization: Bearer <token>`。
 - 写请求带 `X-ZwOA-Request: 1`。有请求体时使用 `Content-Type: application/json`，按接口定义传入单个 JSON 对象。
 - 业务接口以 `{code, message, data}` 返回。成功的 `code` 为 `0`。遇到 `401` 时检查登录状态，`403` 时检查权限和写请求头，`429` 时按 `Retry-After` 等待。
+- `PUT /api/v1/auth/avatar` 更新当前账户的头像，`image` 为 Base64 编码的 JPEG，最大 256 × 256 像素、128 KiB。会话身份和消息接口返回头像版本，登录后可通过 `GET /api/v1/auth/avatars/{version}` 获取对应图片。
 
 ## 消息和管理
 

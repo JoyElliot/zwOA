@@ -61,7 +61,7 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
           ))}
         </nav>
         <div className="workspace-sidebar-footer">
-          <AccountMenu name={identity.name} username={identity.username} {...theme}
+          <AccountMenu name={identity.name} username={identity.username} avatarVersion={identity.avatarVersion} {...theme}
             onLogout={() => void logout().catch((error: unknown) => setActionError(errorMessage(error)))} />
         </div>
       </aside>

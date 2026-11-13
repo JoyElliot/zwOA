@@ -32,9 +32,10 @@ type Account struct {
 
 type Identity struct {
 	Account
-	Permissions []string         `json:"permissions"`
-	Teams       []TeamMembership `json:"teams"`
-	Modules     []string         `json:"adminModules"`
+	AvatarVersion string           `json:"avatarVersion" dc:"当前头像版本；空字符串表示默认头像"`
+	Permissions   []string         `json:"permissions"`
+	Teams         []TeamMembership `json:"teams"`
+	Modules       []string         `json:"adminModules"`
 }
 
 type TeamMembership struct {
@@ -129,7 +130,10 @@ func (s *Store) Identity(ctx context.Context, account Account) (Identity, error)
 		return identity, nil
 	}
 	if err := s.transaction(ctx, func(tx *sql.Tx) error {
-		var err error
+		if err := tx.QueryRowContext(ctx, `SELECT COALESCE((SELECT version FROM account_avatars WHERE account_id = ?), '')`, account.ID).
+			Scan(&identity.AvatarVersion); err != nil {
+			return err
+		}
 		rows, err := tx.QueryContext(ctx, `SELECT DISTINCT p.permission FROM group_permissions p
 			JOIN account_groups g ON g.group_id = p.group_id WHERE g.account_id = ? ORDER BY p.permission`, account.ID)
 		identity.Permissions, err = collect(rows, err, scanString)

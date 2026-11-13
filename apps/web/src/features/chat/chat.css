@@ -73,7 +73,7 @@
   --chat-blue-deep: #115fc5;
   background: var(--canvas);
 }
-.chat-thread .chat-avatar-round { background: var(--chat-blue); color: #fff; }
+.chat-thread .chat-avatar { background: var(--chat-blue); color: #fff; }
 .chat-conversation-title {
   gap: 10px;
   padding-inline: clamp(12px, 3vw, 20px);

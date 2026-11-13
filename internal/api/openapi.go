@@ -64,6 +64,16 @@ func describeAuth(doc *goai.OpenApiV3) {
 		method: "GET", path: "/session", summary: "获取当前会话身份及权限",
 		output: organization.Identity{}, statuses: []int{401},
 	})
+	addOperation(doc, "账户", "auth", &sessionSecurity, apiOperation{
+		method: "PUT", path: "/avatar", summary: "更新自己的头像",
+		description: "接收 Base64 编码的 JPEG。图片不超过 128 KiB，任一边不超过 256 像素。",
+		input:       avatarImage{}, statuses: []int{400, 401, 403, 413},
+	})
+	addOperation(doc, "账户", "auth", &sessionSecurity, apiOperation{
+		method: "GET", path: "/avatars/{version}", summary: "读取指定版本的头像",
+		params: goai.Parameters{parameter("version", "path", "头像版本", true, goai.Schema{Type: "string", Pattern: "^[a-f0-9]{32}$"})},
+		output: avatarImage{}, statuses: []int{401, 403, 404},
+	})
 	addOperation(doc, "认证", "auth", &optionalSession, apiOperation{
 		method: "POST", path: "/logout", summary: "退出登录", description: "撤销当前会话。无有效会话时也可调用。",
 		statuses: []int{403}, setCookie: "清除浏览器会话 Cookie。",

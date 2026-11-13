@@ -24,8 +24,26 @@ func (m *Message) scan(row messageScanner) error {
 }
 
 func (s *Store) Messages(ctx context.Context, actor, conversation, before, after int64) (MessagePage, error) {
-	page := MessagePage{Messages: []Message{}}
+	page := MessagePage{Messages: []Message{}, Avatars: []MemberAvatar{}}
 	err := s.withMember(ctx, actor, conversation, func(tx *sql.Tx) error {
+		avatars, err := tx.QueryContext(ctx, `SELECT avatar.account_id, avatar.version
+			FROM chat_members member JOIN account_avatars avatar ON avatar.account_id = member.account_id
+			WHERE member.conversation_id = ? ORDER BY avatar.account_id`, conversation)
+		if err != nil {
+			return err
+		}
+		defer avatars.Close()
+		for avatars.Next() {
+			var avatar MemberAvatar
+			if err := avatars.Scan(&avatar.AccountID, &avatar.Version); err != nil {
+				return err
+			}
+			page.Avatars = append(page.Avatars, avatar)
+		}
+		if err := avatars.Err(); err != nil {
+			return err
+		}
+
 		query := `SELECT ` + messageColumns + ` FROM chat_messages m JOIN accounts a ON a.id = m.sender_id WHERE m.conversation_id = ?`
 		args := []any{conversation}
 		if after > 0 {

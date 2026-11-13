@@ -1,9 +1,10 @@
-import { RightOutlined, UserOutlined } from '@ant-design/icons';
-import { Avatar, Card, Descriptions, Switch, Tag } from 'antd';
+import { RightOutlined } from '@ant-design/icons';
+import { Card, Descriptions, Switch, Tag } from 'antd';
 import { Link } from 'react-router';
 import type { ThemeControls } from '../../shared/ui/AppHeader';
 import type { Identity } from '../auth/api';
 import { PasswordPage } from '../auth/Authentication';
+import { ProfileAvatar } from './ProfileAvatar';
 import './account.css';
 
 export function ProfilePage({ identity }: { identity: Identity }) {
@@ -11,10 +12,7 @@ export function ProfilePage({ identity }: { identity: Identity }) {
     <section className="account-page" aria-labelledby="profile-title">
       <h1 id="profile-title">个人主页</h1>
       <Card className="account-panel">
-        <div className="profile-heading">
-          <Avatar className="profile-avatar" size={52} icon={<UserOutlined />} aria-hidden="true" />
-          <h2>{identity.name}</h2>
-        </div>
+        <ProfileAvatar identity={identity} />
         <Descriptions column={1} items={[
           { key: 'username', label: '登录名', children: identity.username },
           { key: 'role', label: '账户类型', children: identity.superAdmin ? '超级管理员' : '成员' },

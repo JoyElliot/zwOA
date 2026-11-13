@@ -1,8 +1,12 @@
 package api
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/jpeg"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -148,6 +152,55 @@ func TestOrganizationAccess(t *testing.T) {
 	if err := json.Unmarshal(data, &history); err != nil || len(history.Data.Messages) != 1 || history.Data.Messages[0].Text != "你好" {
 		t.Fatalf("会话历史不正确：%s", data)
 	}
+	t.Run("AccountAvatar", func(t *testing.T) {
+		var picture bytes.Buffer
+		if err := jpeg.Encode(&picture, image.NewRGBA(image.Rect(0, 0, 32, 32)), nil); err != nil {
+			t.Fatal(err)
+		}
+		payload := fmt.Sprintf(`{"image":"%s"}`, base64.StdEncoding.EncodeToString(picture.Bytes()))
+		call("PUT", "/auth/avatar", payload, nil, nil, 401)
+		call("PUT", "/auth/avatar", payload, admin, map[string]string{"X-ZwOA-Request": ""}, 403)
+		call("PUT", "/auth/avatar", `{"image":"not-base64"}`, admin, nil, 400)
+		call("PUT", "/auth/avatar", payload, admin, nil, 200)
+
+		_, body := call("GET", "/auth/session", "", admin, nil, 200)
+		var account struct{ Data organization.Identity }
+		if err := json.Unmarshal(body, &account); err != nil || account.Data.AvatarVersion == "" {
+			t.Fatalf("会话未返回头像版本：%s", body)
+		}
+		version := account.Data.AvatarVersion
+		_, body = call("GET", "/auth/session", "", nil, member, 200)
+		if err := json.Unmarshal(body, &account); err != nil || account.Data.AvatarVersion != "" {
+			t.Fatalf("上传修改了另一个账户：%s", body)
+		}
+		call("GET", "/auth/avatars/"+version, "", nil, nil, 401)
+		_, body = call("GET", "/auth/avatars/"+version, "", nil, member, 200)
+		var stored struct{ Data avatarImage }
+		if err := json.Unmarshal(body, &stored); err != nil {
+			t.Fatal(err)
+		}
+		raw, err := base64.StdEncoding.DecodeString(stored.Data.Image)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := jpeg.Decode(bytes.NewReader(raw)); err != nil {
+			t.Fatalf("读取的头像不是 JPEG：%v", err)
+		}
+
+		_, body = call("GET", "/chat/conversations", "", nil, member, 200)
+		var list struct{ Data []chat.Conversation }
+		if err := json.Unmarshal(body, &list); err != nil || len(list.Data) != 1 || list.Data[0].AvatarVersion != version {
+			t.Fatalf("单聊列表没有返回对端头像：%s", body)
+		}
+		_, body = call("GET", fmt.Sprintf("%s/messages?after=%d", thread, history.Data.Messages[0].ID), "", nil, member, 200)
+		var latest struct{ Data chat.MessagePage }
+		if err := json.Unmarshal(body, &latest); err != nil || len(latest.Data.Messages) != 0 ||
+			len(latest.Data.Avatars) != 1 || latest.Data.Avatars[0] != (chat.MemberAvatar{AccountID: 1, Version: version}) {
+			t.Fatalf("无新消息时未同步成员头像：%s", body)
+		}
+		call("PUT", "/auth/avatar", payload, admin, nil, 200)
+		call("GET", "/auth/avatars/"+version, "", nil, member, 404)
+	})
 	checkUnread := func(want int) {
 		t.Helper()
 		_, data := call("GET", "/chat/conversations", "", nil, member, 200)

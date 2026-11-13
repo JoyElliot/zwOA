@@ -40,6 +40,8 @@ func bindAuth(server *ghttp.Server, api authentication) {
 		group.GET("/session", api.authorized(false, api.session))
 		group.POST("/logout", api.logout)
 		group.PUT("/password", api.authorized(false, api.password))
+		group.PUT("/avatar", api.authorized(false, api.saveAvatar))
+		group.GET("/avatars/:version", api.authorized(false, api.avatar))
 	})
 }
 

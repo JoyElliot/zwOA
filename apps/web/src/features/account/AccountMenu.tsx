@@ -1,13 +1,15 @@
 import { LogoutOutlined, MoonOutlined, SettingOutlined, SunOutlined, UserOutlined } from '@ant-design/icons';
-import { Avatar, Button, Dropdown } from 'antd';
+import { Button, Dropdown } from 'antd';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import type { ThemeControls } from '../../shared/ui/AppHeader';
+import { UserAvatar } from '../../shared/ui/UserAvatar';
 import './account.css';
 
-export function AccountMenu({ name, username, onLogout, dark, onToggleTheme }: ThemeControls & {
+export function AccountMenu({ name, username, avatarVersion, onLogout, dark, onToggleTheme }: ThemeControls & {
   name: string;
   username: string;
+  avatarVersion: string;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -43,7 +45,7 @@ export function AccountMenu({ name, username, onLogout, dark, onToggleTheme }: T
       <Button type="text" className="account-trigger"
         aria-label={name} aria-haspopup="menu" aria-expanded={open} title={name}
         onClickCapture={(event) => setKeyboardOpened(event.detail === 0)}>
-        <Avatar className="account-trigger-avatar" size={34} icon={<UserOutlined />} aria-hidden="true" />
+        <UserAvatar name={name} version={avatarVersion} className="account-trigger-avatar" size={34} generic />
         <span className="account-trigger-details">
           <strong className="account-name">{name}</strong>
           <span className="account-login-name">{username}</span>
