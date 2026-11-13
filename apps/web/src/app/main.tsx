@@ -4,12 +4,13 @@ import zhCN from 'antd/locale/zh_CN';
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Link, Navigate, Route, Routes } from 'react-router';
-import { AuthLayout, LoginPage, PasswordPage, SessionStatus, useSession } from './Authentication';
-import { desktop } from './api/client';
-import type { ThemeControls } from './AppHeader';
+import { AuthLayout, LoginPage, PasswordPage, SessionStatus } from '../features/auth/Authentication';
+import { useSession } from '../features/auth/session';
+import { desktop } from '../shared/api/client';
+import type { ThemeControls } from '../shared/ui/AppHeader';
 import { Workspace } from './Workspace';
 import { useColorTheme } from './theme';
-import './workspace.css';
+import './styles.css';
 
 function App() {
   const { colorTheme, toggleTheme } = useColorTheme();
@@ -34,7 +35,7 @@ function App() {
 }
 
 const adminWindow = desktop && getCurrentWindow().label === 'admin';
-const AdminPanel = lazy(() => import('./AdminPanel'));
+const AdminPanel = lazy(() => import('../features/organization/AdminPanel'));
 
 function AppRoutes({ theme }: { theme: ThemeControls }) {
   const session = useSession();

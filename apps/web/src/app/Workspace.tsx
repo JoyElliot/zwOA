@@ -1,16 +1,17 @@
-import { ArrowRightOutlined, DashboardOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
-import { Alert, Badge, Button, Card, Dropdown, Spin } from 'antd';
+import { DashboardOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { Alert, Badge, Button, Dropdown, Spin } from 'antd';
 import { invoke } from '@tauri-apps/api/core';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, Route, Routes, useMatch, useNavigate } from 'react-router';
-import { AppHeader, type ThemeControls } from './AppHeader';
-import { signOut } from './Authentication';
-import { desktop, errorMessage } from './api/client';
-import type { Identity } from './api/organization';
-import { getWorkbenchOverview, type WorkbenchOverview } from './api/workbench';
-import { modules, type WorkspaceModule } from './modules';
+import { AppHeader, type ThemeControls } from '../shared/ui/AppHeader';
+import { signOut } from '../features/auth/session';
+import { desktop, errorMessage } from '../shared/api/client';
+import type { Identity } from '../features/auth/api';
+import { getWorkbenchOverview, type WorkbenchOverview } from '../features/workbench/api';
+import { ModulePage, Workbench } from '../features/workbench/Workbench';
+import { modules } from '../features/workbench/modules';
 
-const ChatPage = lazy(() => import('./chat/ChatPage'));
+const ChatPage = lazy(() => import('../features/chat/ChatPage'));
 
 type Connection =
   | { state: 'loading' | 'offline' }
@@ -86,7 +87,7 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
       <main className={chatOpen ? 'workspace-main workspace-main-chat' : 'workspace-main'}>
         {actionError && <Alert className="form-alert" type="error" showIcon title={actionError} closable onClose={() => setActionError('')} />}
         <Routes>
-          <Route index element={<Workbench connection={connection} availableModules={availableModules} />} />
+          <Route index element={<Workbench overview={connection.state === 'online' ? connection.overview : undefined} availableModules={availableModules} />} />
           {availableModules.map((module) => module.key === 'chat' ? (
             <Route key={module.path} path="/chat/:conversationId?" element={
               <Suspense fallback={<div className="workspace-chat-loading"><Spin aria-label="正在打开消息" /></div>}>
@@ -98,47 +99,5 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
         </Routes>
       </main>
     </div>
-  );
-}
-
-function Workbench({ connection, availableModules }: { connection: Connection; availableModules: WorkspaceModule[] }) {
-  return (
-    <>
-      <section className="welcome">
-        <h1>工作台</h1>
-        <p>{availableModules.length > 0 ? '选择一个功能模块。' : '当前账户没有可用的功能模块，请联系管理员分配权限。'}</p>
-      </section>
-      <div className="module-grid">
-        {availableModules.map(({ path, title, summary, Icon, color }) => (
-          <Link className="module-link" key={path} to={path}>
-            <Card className="module-card">
-              <span className={`module-icon ${color}`} aria-hidden="true"><Icon /></span>
-              <h2>{title}</h2>
-              <p>{summary}</p>
-              <span className="module-action">查看模块 <ArrowRightOutlined /></span>
-            </Card>
-          </Link>
-        ))}
-      </div>
-      {connection.state === 'online' && (
-        <p className="service-version">{connection.overview.name} · v{connection.overview.version}</p>
-      )}
-    </>
-  );
-}
-
-function ModulePage({ module }: { module: WorkspaceModule }) {
-  const { Icon } = module;
-  return (
-    <>
-      <Link className="back-link" to="/">返回工作台</Link>
-      <section className="module-heading">
-        <span className={`module-icon ${module.color}`} aria-hidden="true"><Icon /></span>
-        <div><h1>{module.title}</h1><p>{module.summary}</p></div>
-      </section>
-      <Card className="scope-card" title="待建设功能">
-        <ul>{module.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
-      </Card>
-    </>
   );
 }

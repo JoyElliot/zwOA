@@ -1,7 +1,7 @@
 import { ArrowLeftOutlined, CheckOutlined, MessageOutlined, PhoneOutlined, SettingOutlined, TeamOutlined } from '@ant-design/icons';
 import { Alert, Avatar, Button, Empty, Spin, Tooltip } from 'antd';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { errorMessage } from '../api/client';
+import { errorMessage } from '../../shared/api/client';
 import { ChatComposer } from './ChatComposer';
 import { getMessages, markRead, newRequestKey, sendMessage, type Conversation, type Message } from './api';
 

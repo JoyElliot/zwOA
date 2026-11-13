@@ -3,7 +3,7 @@ import { ProCard } from '@ant-design/pro-components/card';
 import { Alert, Badge, Button, Empty, Input, Spin } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ApiError, errorMessage } from '../api/client';
+import { ApiError, errorMessage } from '../../shared/api/client';
 import { getConversations, type Conversation } from './api';
 import { ChatAvatar, ConversationThread } from './ConversationThread';
 import { CreateConversation } from './CreateConversation';

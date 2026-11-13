@@ -154,64 +154,16 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .shell.chat-shell { height: 100dvh; grid-template-rows: auto minmax(0, 1fr); }
 .workspace-main.workspace-main-chat { display: flex; flex-direction: column; min-height: 0; max-width: none; padding: 0; }
 .workspace-chat-loading { margin: auto; }
-.welcome {
-  padding: 8px 0 4px;
-  margin-bottom: 24px;
-}
 h1, h2, p { margin: 0; }
 h1 { font-size: clamp(27px, 3.5vw, 38px); letter-spacing: 0.025em; }
-.welcome p, .module-heading p { margin-top: 9px; color: var(--muted); font-size: 15px; line-height: 1.7; }
-.module-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.module-link { display: block; border-radius: 10px; }
-.module-card { height: 100%; border-color: var(--line); transition: border-color 150ms, box-shadow 150ms; }
-.module-link:hover .module-card { border-color: var(--accent-border); box-shadow: 0 8px 24px var(--shadow); }
-.module-icon {
-  width: 42px;
-  height: 42px;
-  display: inline-grid;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 10px;
-  font-size: 20px;
-}
-.module-icon.blue { color: var(--accent); background: var(--selected); }
-.module-icon.teal { color: var(--teal); background: var(--teal-tint); }
-.module-card h2 { margin-top: 16px; color: var(--text); font-size: 18px; }
-.module-card p { min-height: 3.2em; margin-top: 6px; color: var(--muted); line-height: 1.6; }
-.module-action { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--accent); }
-.service-version { margin-top: 24px; color: var(--muted); font-size: 13px; }
 .back-link { color: var(--accent); font-size: 14px; }
-.module-heading { display: flex; align-items: center; gap: 16px; margin: 20px 0 24px; }
-.scope-card { max-width: 620px; border-color: var(--line); }
-.scope-card ul { margin: 0; padding-left: 20px; line-height: 2; color: var(--muted); }
 
 .account-trigger { max-width: 150px; }
 .account-trigger > span:last-child { overflow: hidden; text-overflow: ellipsis; }
-.auth-shell { min-height: 100dvh; display: grid; grid-template-rows: auto 1fr; }
-.auth-shell .brand { flex-basis: auto; border: 0; }
-.auth-main {
-  display: grid;
-  place-items: center;
-  padding: 28px 16px;
-  background: radial-gradient(ellipse at 50% 25%, var(--selected), var(--canvas) 65%);
-}
-.auth-card, .password-layout { width: min(100%, 420px); }
-.auth-card { border-color: var(--line); box-shadow: 0 16px 48px var(--shadow); }
-.auth-card .ant-card-body { padding: clamp(22px, 5vw, 36px); }
-.auth-heading { margin-bottom: 24px; }
-.auth-heading .brand-mark { width: 42px; height: 42px; margin-bottom: 14px; }
-.auth-heading h1, .admin-heading h1 { font-size: clamp(24px, 3.5vw, 32px); }
-.auth-heading p, .admin-heading p { margin-top: 8px; color: var(--muted); line-height: 1.6; }
 .form-alert { margin-bottom: 16px; }
-.password-layout .back-link { display: inline-block; margin-bottom: 12px; }
-.admin-heading { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 22px; }
-.admin-table { border-color: var(--line); }
-.admin-table .ant-card-body { padding: 12px; }
-.admin-table .ant-table-cell { overflow-wrap: anywhere; }
 
 @media (max-width: 950px) {
   .shell { --sidebar-width: 184px; }
-  .module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 640px) {
@@ -223,14 +175,6 @@ h1 { font-size: clamp(27px, 3.5vw, 38px); letter-spacing: 0.025em; }
   .navigation { flex-direction: row; overflow-x: auto; padding: 4px; }
   .navigation a, .navigation button { padding: 8px 10px; }
   .workspace-main { padding-top: 22px; }
-  .module-grid { grid-template-columns: 1fr; }
-  .module-card p { min-height: 0; }
-  .admin-shell { display: grid; --sidebar-width: 52px; }
-  .admin-sidebar { padding: 8px 5px; border-right: 1px solid var(--line); border-bottom: 0; }
-  .admin-sidebar .navigation { flex-direction: column; padding: 0; }
-  .admin-sidebar .navigation a { justify-content: center; font-size: 16px; }
-  .admin-nav-label { display: none; }
-  .admin-main { padding-inline: 12px; }
 }
 
 @media (max-width: 470px) {

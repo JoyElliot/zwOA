@@ -1,21 +1,5 @@
-import { desktop, request, setDesktopToken } from './client';
-
-export interface Account {
-  id: number;
-  username: string;
-  name: string;
-  superAdmin: boolean;
-  active: boolean;
-  mustChangePassword: boolean;
-}
-
-export type TeamKind = 'team' | 'project';
-
-export interface Identity extends Account {
-  permissions: string[];
-  teams: { id: number; name: string; kind: TeamKind; admin: boolean }[];
-  adminModules: string[];
-}
+import { request } from '../../shared/api/client';
+import type { Account, TeamKind } from '../auth/api';
 
 export interface ManagedAccount extends Account { groupIds: number[] }
 export interface AccountInput {
@@ -57,19 +41,6 @@ export interface Administration {
   modules: ManagedModule[];
 }
 
-export const getIdentity = (signal?: AbortSignal) => request<Identity>('/auth/session', { signal });
-
-export async function login(body: { username: string; password: string }) {
-  if (desktop) {
-    const { token } = await request<{ token: string }>('/auth/desktop/login', { method: 'POST', body });
-    await setDesktopToken(token);
-  } else {
-    await request('/auth/login', { method: 'POST', body });
-  }
-}
-
-export const logout = () => request('/auth/logout', { method: 'POST' });
-export const changePassword = (body: { current: string; next: string }) => request('/auth/password', { method: 'PUT', body });
 export const getAdministration = (signal?: AbortSignal) => request<Administration>('/admin/overview', { signal });
 
 export function saveRecord(path: 'accounts' | 'groups' | 'teams', id: number | undefined, revision: number, body: AccountInput | Omit<PermissionGroup, 'id'> | Omit<Team, 'id'>) {

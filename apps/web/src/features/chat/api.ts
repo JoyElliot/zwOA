@@ -1,4 +1,4 @@
-import { request } from '../api/client';
+import { request } from '../../shared/api/client';
 
 export interface Contact {
   id: number;

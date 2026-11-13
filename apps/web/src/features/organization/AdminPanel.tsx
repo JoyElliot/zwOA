@@ -2,12 +2,13 @@ import { ApartmentOutlined, AppstoreOutlined, IdcardOutlined, PlusOutlined, Safe
 import { Alert, Button, Card, Checkbox, Form, Input, Modal, Popconfirm, Select, Space, Spin, Table, Tag } from 'antd';
 import { useEffect, useState } from 'react';
 import { Navigate, NavLink, Route, Routes } from 'react-router';
-import { AppHeader, type ThemeControls } from './AppHeader';
-import { ApiError, errorMessage } from './api/client';
+import { AppHeader, type ThemeControls } from '../../shared/ui/AppHeader';
+import { ApiError, errorMessage } from '../../shared/api/client';
 import {
   deleteRecord, getAdministration, saveModuleAdmins, saveRecord,
   type AccountInput, type Administration, type ManagedAccount, type ManagedModule, type PermissionGroup, type Team,
-} from './api/organization';
+} from './api';
+import './admin.css';
 
 const sections = [
   { key: 'accounts', title: '账户', Icon: IdcardOutlined },

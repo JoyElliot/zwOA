@@ -1,6 +1,6 @@
 import { Alert, Form, Input, Modal, Segmented, Select } from 'antd';
 import { useEffect, useRef, useState } from 'react';
-import { errorMessage } from '../api/client';
+import { errorMessage } from '../../shared/api/client';
 import { createConversation, findContacts, newRequestKey, type Contact } from './api';
 
 export function CreateConversation({ onClose, onCreate }: { onClose: () => void; onCreate: (id: number) => void }) {

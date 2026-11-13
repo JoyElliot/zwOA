@@ -1,0 +1,16 @@
+.auth-shell { min-height: 100dvh; display: grid; grid-template-rows: auto 1fr; }
+.auth-shell .brand { flex-basis: auto; border: 0; }
+.auth-main {
+  display: grid;
+  place-items: center;
+  padding: 28px 16px;
+  background: radial-gradient(ellipse at 50% 25%, var(--selected), var(--canvas) 65%);
+}
+.auth-card, .password-layout { width: min(100%, 420px); }
+.auth-card { border-color: var(--line); box-shadow: 0 16px 48px var(--shadow); }
+.auth-card .ant-card-body { padding: clamp(22px, 5vw, 36px); }
+.auth-heading { margin-bottom: 24px; }
+.auth-heading .brand-mark { width: 42px; height: 42px; margin-bottom: 14px; }
+.auth-heading h1 { font-size: clamp(24px, 3.5vw, 32px); }
+.auth-heading p { margin-top: 8px; color: var(--muted); line-height: 1.6; }
+.password-layout .back-link { display: inline-block; margin-bottom: 12px; }

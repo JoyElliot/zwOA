@@ -1,78 +1,12 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Form, Input, Spin } from 'antd';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { AppHeader, type ThemeControls } from './AppHeader';
-import { ApiError, errorMessage, setDesktopToken } from './api/client';
-import { changePassword, getIdentity, login, logout, type Identity } from './api/organization';
-
-type Session =
-  | { status: 'loading' | 'signed-out' }
-  | { status: 'error'; message: string }
-  | { status: 'ready'; identity: Identity };
-
-const sessionEvents = new BroadcastChannel('zwoa-session');
-
-export function useSession() {
-  const [session, setSession] = useState<Session>({ status: 'loading' });
-
-  useEffect(() => {
-    let current: AbortController | undefined;
-
-    async function refresh() {
-      current?.abort();
-      const controller = new AbortController();
-      current = controller;
-      try {
-        const identity = await getIdentity(controller.signal);
-        if (!controller.signal.aborted) setSession({ status: 'ready', identity });
-      } catch (error) {
-        if (controller.signal.aborted) return;
-        if (error instanceof ApiError && error.status === 401) {
-          setSession({ status: 'signed-out' });
-        } else {
-          setSession((previous) => previous.status === 'ready' ? previous : { status: 'error', message: errorMessage(error) });
-        }
-      }
-    }
-
-    function clear() {
-      current?.abort();
-      setSession({ status: 'signed-out' });
-    }
-
-    function sync(event: MessageEvent) {
-      if (event.data === 'signed-out') clear();
-      else void refresh();
-    }
-
-    void refresh();
-    window.addEventListener('focus', refresh);
-    window.addEventListener('zwoa-session-expired', clear);
-    window.addEventListener('zwoa-session-refresh', refresh);
-    sessionEvents.addEventListener('message', sync);
-    return () => {
-      current?.abort();
-      window.removeEventListener('focus', refresh);
-      window.removeEventListener('zwoa-session-expired', clear);
-      window.removeEventListener('zwoa-session-refresh', refresh);
-      sessionEvents.removeEventListener('message', sync);
-    };
-  }, []);
-
-  return session;
-}
-
-export async function endSession() {
-  await setDesktopToken(null);
-  window.dispatchEvent(new Event('zwoa-session-expired'));
-  sessionEvents.postMessage('signed-out');
-}
-
-export async function signOut() {
-  await logout();
-  await endSession();
-}
+import { AppHeader, type ThemeControls } from '../../shared/ui/AppHeader';
+import { errorMessage } from '../../shared/api/client';
+import { changePassword, login } from './api';
+import { announceSignIn, endSession, refreshSession, type Session } from './session';
+import './auth.css';
 
 export function AuthLayout({ theme, children }: { theme: ThemeControls; children: React.ReactNode }) {
   return (
@@ -86,7 +20,7 @@ export function AuthLayout({ theme, children }: { theme: ThemeControls; children
 export function SessionStatus({ session }: { session: Exclude<Session, { status: 'ready' }> }) {
   if (session.status === 'error') {
     return <Alert type="error" showIcon title={session.message} action={
-      <Button onClick={() => window.dispatchEvent(new Event('zwoa-session-refresh'))}>重试</Button>
+      <Button onClick={refreshSession}>重试</Button>
     } />;
   }
   return <Spin aria-label="正在验证登录状态" />;
@@ -101,8 +35,7 @@ export function LoginPage() {
     setError('');
     try {
       await login(values);
-      window.dispatchEvent(new Event('zwoa-session-refresh'));
-      sessionEvents.postMessage('signed-in');
+      announceSignIn();
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
