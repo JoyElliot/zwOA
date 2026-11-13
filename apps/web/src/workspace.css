@@ -151,6 +151,9 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .navigation a:hover, .navigation button:hover { background: var(--hover); color: var(--text); }
 .navigation a.active { background: var(--selected); color: var(--accent); }
 .workspace-main { width: 100%; min-width: 0; max-width: 1260px; margin: 0 auto; padding: 36px clamp(20px, 4vw, 52px) 48px; }
+.shell.chat-shell { height: 100dvh; grid-template-rows: auto minmax(0, 1fr); }
+.workspace-main.workspace-main-chat { display: flex; flex-direction: column; min-height: 0; max-width: none; padding: 0; }
+.workspace-chat-loading { margin: auto; }
 .welcome {
   padding: 8px 0 4px;
   margin-bottom: 24px;
@@ -213,6 +216,7 @@ h1 { font-size: clamp(27px, 3.5vw, 38px); letter-spacing: 0.025em; }
 
 @media (max-width: 640px) {
   .shell { display: block; }
+  .shell.chat-shell { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
   .sidebar { padding: 6px 12px; border-right: 0; border-bottom: 1px solid var(--line); }
   .brand { flex-basis: auto; padding: 0 12px; border-right: 0; }
   .header-actions { gap: 6px; padding: 0 8px; }

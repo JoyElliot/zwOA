@@ -1,6 +1,15 @@
-import { ApartmentOutlined, AuditOutlined, TeamOutlined } from '@ant-design/icons';
+import { ApartmentOutlined, AuditOutlined, MessageOutlined, TeamOutlined } from '@ant-design/icons';
 
 export const modules = [
+  {
+    path: '/chat',
+    key: 'chat',
+    title: '消息',
+    summary: '与同事单聊或发起群聊。',
+    features: [],
+    Icon: MessageOutlined,
+    color: 'blue',
+  },
   {
     path: '/crm',
     key: 'crm',

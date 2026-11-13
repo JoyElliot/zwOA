@@ -1,14 +1,16 @@
 import { ArrowRightOutlined, DashboardOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
-import { Alert, Badge, Button, Card, Dropdown } from 'antd';
+import { Alert, Badge, Button, Card, Dropdown, Spin } from 'antd';
 import { invoke } from '@tauri-apps/api/core';
-import { useEffect, useState } from 'react';
-import { Link, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { Link, Navigate, NavLink, Route, Routes, useMatch, useNavigate } from 'react-router';
 import { AppHeader, type ThemeControls } from './AppHeader';
 import { signOut } from './Authentication';
 import { desktop, errorMessage } from './api/client';
 import type { Identity } from './api/organization';
 import { getWorkbenchOverview, type WorkbenchOverview } from './api/workbench';
 import { modules, type WorkspaceModule } from './modules';
+
+const ChatPage = lazy(() => import('./chat/ChatPage'));
 
 type Connection =
   | { state: 'loading' | 'offline' }
@@ -25,8 +27,10 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
   const [attempt, setAttempt] = useState(0);
   const [actionError, setActionError] = useState('');
   const navigate = useNavigate();
+  const chatRoute = useMatch('/chat/*');
   const availableModules = modules.filter(({ key }) => identity.superAdmin ||
     identity.permissions.includes(`${key}.access`) || identity.adminModules.includes(key));
+  const chatOpen = !!chatRoute && availableModules.some(({ key }) => key === 'chat');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -43,7 +47,7 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
   const connectionLabel = connectionLabels[connection.state];
 
   return (
-    <div className="shell">
+    <div className={chatOpen ? 'shell chat-shell' : 'shell'}>
       <AppHeader {...theme}>
           <div className="service-status" role="status">
             <Badge status={connectionLabel.status} text={connectionLabel.label} />
@@ -79,13 +83,17 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
           ))}
         </nav>
       </aside>
-      <main className="workspace-main">
+      <main className={chatOpen ? 'workspace-main workspace-main-chat' : 'workspace-main'}>
         {actionError && <Alert className="form-alert" type="error" showIcon title={actionError} closable onClose={() => setActionError('')} />}
         <Routes>
           <Route index element={<Workbench connection={connection} availableModules={availableModules} />} />
-          {availableModules.map((module) => (
-            <Route key={module.path} path={module.path} element={<ModulePage module={module} />} />
-          ))}
+          {availableModules.map((module) => module.key === 'chat' ? (
+            <Route key={module.path} path="/chat/:conversationId?" element={
+              <Suspense fallback={<div className="workspace-chat-loading"><Spin aria-label="正在打开消息" /></div>}>
+                <ChatPage key={identity.id} actor={identity.id} />
+              </Suspense>
+            } />
+          ) : <Route key={module.path} path={module.path} element={<ModulePage module={module} />} />)}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
