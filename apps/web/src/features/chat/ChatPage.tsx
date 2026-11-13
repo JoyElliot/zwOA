@@ -65,7 +65,7 @@ export default function ChatPage({ actor }: { actor: number }) {
           <h1>消息</h1>
           <div className="chat-list-actions">
             <Button type="text" icon={<ReloadOutlined />} aria-label="刷新会话" title="刷新会话" onClick={() => void refresh()} />
-            <Button type="primary" icon={<PlusOutlined />} aria-label="发起会话" onClick={() => setCreating(true)}>发起</Button>
+            <Button type="text" icon={<PlusOutlined />} aria-label="发起会话" title="发起会话" onClick={() => setCreating(true)} />
           </div>
         </div>
       </WorkspaceTitlebar>
