@@ -150,12 +150,26 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .navigation a:hover, .navigation button:hover { background: var(--hover); color: var(--text); }
 .navigation a.active { background: var(--selected); color: var(--accent); }
 .workspace-main { width: 100%; min-width: 0; max-width: 1260px; margin: 0 auto; padding: 36px clamp(20px, 4vw, 52px) 48px; }
-.shell.workspace-shell { --workspace-topbar-height: 62px; height: 100dvh; grid-template-rows: minmax(0, 1fr); }
+.shell.workspace-shell {
+  --workspace-topbar-scale: .75;
+  --workspace-topbar-height: 50px;
+  height: 100dvh;
+  grid-template-rows: minmax(0, 1fr);
+}
 .workspace-sidebar { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 0; }
-.workspace-sidebar .brand { flex: 0 0 var(--workspace-topbar-height); border-right: 0; border-bottom: 1px solid var(--line); }
-.workspace-sidebar .brand-mark { width: 38px; height: 38px; border-radius: 10px; font-size: 20px; }
+.workspace-sidebar .brand {
+  flex: 0 0 var(--workspace-topbar-height);
+  gap: calc(10px * var(--workspace-topbar-scale));
+  border-right: 0;
+  border-bottom: 1px solid var(--line);
+}
+.workspace-sidebar .brand-mark {
+  width: calc(38px * var(--workspace-topbar-scale));
+  height: calc(38px * var(--workspace-topbar-scale));
+  border-radius: calc(10px * var(--workspace-topbar-scale));
+  font-size: calc(20px * var(--workspace-topbar-scale));
+}
 .workspace-sidebar .brand strong { font-size: 17px; }
-.workspace-sidebar .brand small { font-size: 11px; }
 .workspace-sidebar .navigation { min-height: 0; overflow: auto; padding: 10px 12px; }
 .workspace-sidebar-footer {
   display: flex;
@@ -175,6 +189,11 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   height: var(--workspace-topbar-height);
   background: var(--surface);
   border-bottom: 1px solid var(--line);
+}
+.workspace-windowbar .window-controls button {
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
 }
 .workspace-body > .workspace-main { position: relative; flex: 1; min-height: 0; overflow: auto; padding-top: 22px; }
 .workspace-body > .workspace-main-chat { display: flex; flex-direction: column; max-width: none; padding: 0; overflow: hidden; }

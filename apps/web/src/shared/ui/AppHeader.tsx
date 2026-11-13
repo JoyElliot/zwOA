@@ -4,11 +4,11 @@ import { DesktopWindowControls, TitlebarDragRegion } from './DesktopTitlebar';
 
 export interface ThemeControls { dark: boolean; onToggleTheme: () => void }
 
-export function Brand({ caption = 'OA / CRM' }: { caption?: string }) {
+export function Brand({ caption }: { caption?: string }) {
   return (
     <div className="brand">
       <span className="brand-mark" aria-hidden="true">中</span>
-      <span className="brand-name"><strong>中网联合</strong><small>{caption}</small></span>
+      <span className="brand-name"><strong>中网联合</strong>{caption && <small>{caption}</small>}</span>
     </div>
   );
 }
