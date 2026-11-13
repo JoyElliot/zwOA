@@ -118,7 +118,8 @@
 .chat-message-group > * { grid-area: 1 / 1; }
 .chat-message-avatar {
   position: sticky;
-  bottom: 8px;
+  bottom: 0;
+  display: flex;
   z-index: 1;
   align-self: end;
   justify-self: start;
