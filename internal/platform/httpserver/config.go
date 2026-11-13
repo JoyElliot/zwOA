@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"net/netip"
 	"os"
 	"strings"
 )
@@ -9,6 +10,8 @@ type Config struct {
 	Address        string
 	AllowedOrigins []string
 	EnableOpenAPI  bool
+	SecureCookies  bool
+	TrustedProxies []netip.Addr
 }
 
 func ConfigFromEnv() Config {
@@ -27,10 +30,18 @@ func ConfigFromEnv() Config {
 			allowedOrigins = append(allowedOrigins, origin)
 		}
 	}
+	var trustedProxies []netip.Addr
+	for entry := range strings.SplitSeq(os.Getenv("ZWOA_TRUSTED_PROXIES"), ",") {
+		if address, err := netip.ParseAddr(strings.TrimSpace(entry)); err == nil {
+			trustedProxies = append(trustedProxies, address.Unmap())
+		}
+	}
 
 	return Config{
 		Address:        address,
 		AllowedOrigins: allowedOrigins,
 		EnableOpenAPI:  os.Getenv("ZWOA_ENABLE_OPENAPI") == "1",
+		SecureCookies:  os.Getenv("ZWOA_SECURE_COOKIES") == "1",
+		TrustedProxies: trustedProxies,
 	}
 }
