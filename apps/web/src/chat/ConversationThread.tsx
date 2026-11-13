@@ -1,17 +1,40 @@
-import { ArrowLeftOutlined, MessageOutlined, SendOutlined, TeamOutlined } from '@ant-design/icons';
-import { Alert, Avatar, Button, Empty, Input, Spin } from 'antd';
+import { ArrowLeftOutlined, CheckOutlined, MessageOutlined, PhoneOutlined, SettingOutlined, TeamOutlined } from '@ant-design/icons';
+import { Alert, Avatar, Button, Empty, Spin, Tooltip } from 'antd';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { errorMessage } from '../api/client';
+import { ChatComposer } from './ChatComposer';
 import { getMessages, markRead, newRequestKey, sendMessage, type Conversation, type Message } from './api';
 
-const messageTime = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit' });
-const fullTime = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' });
-const dayLabel = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long' });
+const clock = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const fullTime = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long', timeStyle: 'short' });
+const monthDay = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric' });
 
-export function ChatAvatar({ title, group, size = 38 }: { title: string; group?: boolean; size?: number }) {
-  return <Avatar className="chat-avatar" shape="square" size={size} icon={group ? <TeamOutlined /> : undefined}>
-    {!group && Array.from(title.trim())[0]?.toUpperCase()}
+export function ChatAvatar({ title, group, size = 38, round = false }: { title: string; group?: boolean; size?: number; round?: boolean }) {
+  const useGroupIcon = group && !round;
+  return <Avatar className={round ? 'chat-avatar chat-avatar-round' : 'chat-avatar'} shape={round ? 'circle' : 'square'}
+    size={size} icon={useGroupIcon ? <TeamOutlined /> : undefined}>
+    {!useGroupIcon && Array.from(title.trim())[0]?.toUpperCase()}
   </Avatar>;
+}
+
+function MessageBubble({ message, own, today }: { message: Message; own: boolean; today: Date }) {
+  const date = new Date(message.sentAt);
+  const time = clock.format(date);
+  const label = date.toDateString() === today.toDateString() ? time
+    : date.getFullYear() === today.getFullYear() ? `${monthDay.format(date)} ${time}` : fullTime.format(date);
+
+  return (
+    <div className="chat-bubble">
+      <span className="chat-bubble-text">{message.text}</span>
+      <span className="chat-bubble-meta chat-bubble-meta-space" aria-hidden="true">
+        {label}{own && <CheckOutlined />}
+      </span>
+      <span className="chat-bubble-meta chat-bubble-meta-visible">
+        <time dateTime={date.toISOString()} title={fullTime.format(date)}>{label}</time>
+        {own && <span className="chat-sent" role="img" aria-label="已发送" title="已发送"><CheckOutlined /></span>}
+      </span>
+    </div>
+  );
 }
 
 export function ConversationThread({ conversation, actor, onBack, onActivity }: {
@@ -37,6 +60,7 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
   const sendBusy = useRef(false);
   const lastSend = useRef<{ text: string; requestKey: string } | null>(null);
   const id = conversation.id;
+  const today = new Date();
 
   const readVisible = useCallback(async (signal: AbortSignal) => {
     if (signal.aborted || document.hidden || !atBottom.current || cursor.current <= readCursor.current || pendingRead.current !== null) return;
@@ -161,10 +185,21 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
     <section className="chat-thread" aria-label="聊天内容">
       <header className="chat-thread-header">
         <Button className="chat-back" type="text" icon={<ArrowLeftOutlined />} aria-label="返回会话" onClick={onBack} />
-        <ChatAvatar title={conversation.title} group={conversation.group} />
+        <ChatAvatar title={conversation.title} round size={28} />
         <div className="chat-thread-heading">
           <h2 title={conversation.title}>{conversation.title}</h2>
           <span>{conversation.group ? `${conversation.memberCount} 位成员` : '单聊'}</span>
+        </div>
+        <div className="chat-thread-actions" role="group" aria-label="会话操作">
+          <Tooltip title="暂未支持通话">
+            <span tabIndex={0} aria-label="通话，暂未支持"><Button type="text" size="small" icon={<PhoneOutlined />} aria-label="通话" disabled /></span>
+          </Tooltip>
+          {conversation.group && <Tooltip title="暂未支持群管理">
+            <span tabIndex={0} aria-label="群管理，暂未支持"><Button type="text" size="small" disabled>群管理</Button></span>
+          </Tooltip>}
+          <Tooltip title="暂未支持会话设置">
+            <span tabIndex={0} aria-label="会话设置，暂未支持"><Button type="text" size="small" icon={<SettingOutlined />} aria-label="会话设置" disabled /></span>
+          </Tooltip>
         </div>
       </header>
       {error && <Alert className="chat-error" type="error" showIcon title={error} action={
@@ -183,39 +218,22 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
         <div className="chat-messages" role="log" aria-label="消息记录">
           {messages.map((message, index) => {
             const previous = messages[index - 1];
-            const newDay = !previous || dayLabel.format(previous.sentAt) !== dayLabel.format(message.sentAt);
-            const repeated = !newDay && previous.senderId === message.senderId && message.sentAt - previous.sentAt < 60000;
+            const repeated = previous?.senderId === message.senderId &&
+              new Date(previous.sentAt).toDateString() === new Date(message.sentAt).toDateString();
             const own = message.senderId === actor;
-            return <div key={message.id}>
-              {newDay && <div className="chat-day"><time dateTime={new Date(message.sentAt).toISOString()}>{dayLabel.format(message.sentAt)}</time></div>}
-              <div className={`chat-message${own ? ' chat-message-own' : ''}${repeated ? ' chat-message-continuation' : ''}`}>
-                <div className="chat-message-avatar">{!repeated && <ChatAvatar title={message.sender} size={32} />}</div>
+            return (
+              <div key={message.id} className={`chat-message${own ? ' chat-message-own' : ''}${repeated ? ' chat-message-continuation' : ''}`}>
+                <div className="chat-message-avatar" aria-hidden="true">{!repeated && <ChatAvatar title={message.sender} round size={36} />}</div>
                 <div className="chat-message-content">
-                  {!repeated && <div className="chat-message-meta"><span>{message.sender}</span> <time title={fullTime.format(message.sentAt)} dateTime={new Date(message.sentAt).toISOString()}>{messageTime.format(message.sentAt)}</time></div>}
-                  <div className="chat-bubble">{message.text}</div>
+                  {!own && !repeated && <div className="chat-message-name">{message.sender}</div>}
+                  <MessageBubble message={message} own={own} today={today} />
                 </div>
               </div>
-            </div>;
+            );
           })}
         </div>
       </div>
-      <div className="chat-composer">
-        {sendError && <Alert type="error" showIcon title={sendError} />}
-        <div className="chat-compose-box">
-          <Input.TextArea variant="borderless" aria-label="输入消息" placeholder="输入消息…" value={draft} maxLength={5000}
-            disabled={sending || !initialized} autoSize={{ minRows: 2, maxRows: 5 }} onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) {
-                event.preventDefault();
-                void send();
-              }
-            }} />
-          <div className="chat-compose-actions">
-            <span>Ctrl / ⌘ + Enter 发送</span>
-            <Button type="primary" icon={<SendOutlined />} aria-label="发送" disabled={!draft.trim()} loading={sending} onClick={() => void send()}>发送</Button>
-          </div>
-        </div>
-      </div>
+      <ChatComposer draft={draft} onDraftChange={setDraft} onSend={() => void send()} sending={sending} ready={initialized} error={sendError} />
     </section>
   );
 }
