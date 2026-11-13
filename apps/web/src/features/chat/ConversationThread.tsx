@@ -1,6 +1,6 @@
 import { ArrowLeftOutlined, CheckOutlined, MessageOutlined, PhoneOutlined, SettingOutlined } from '@ant-design/icons';
 import { Alert, Button, Empty, Spin, Tooltip } from 'antd';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { errorMessage } from '../../shared/api/client';
 import { UserAvatar } from '../../shared/ui/UserAvatar';
 import { ChatComposer } from './ChatComposer';
@@ -10,6 +10,20 @@ import { animateSentMessage, captureDraft, captureVisibleMessages } from './mess
 const clock = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 const fullTime = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long', timeStyle: 'short' });
 const monthDay = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric' });
+
+function groupMessages(messages: Message[]) {
+  const groups: { senderId: number; day: string; messages: Message[] }[] = [];
+  for (const message of messages) {
+    const day = new Date(message.sentAt).toDateString();
+    const group = groups.at(-1);
+    if (group?.senderId === message.senderId && group.day === day) {
+      group.messages.push(message);
+    } else {
+      groups.push({ senderId: message.senderId, day, messages: [message] });
+    }
+  }
+  return groups;
+}
 
 function MessageBubble({ message, own, today }: { message: Message; own: boolean; today: Date }) {
   const date = new Date(message.sentAt);
@@ -35,6 +49,7 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
   conversation: Conversation; actor: number; onBack: () => void; onActivity: () => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const groups = useMemo(() => groupMessages(messages), [messages]);
   const [avatars, setAvatars] = useState(() => new Map<number, string>());
   const [draft, setDraft] = useState('');
   const [initialized, setInitialized] = useState(false);
@@ -247,20 +262,24 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
           <Empty image={<MessageOutlined />} description="还没有消息，发一条消息开始聊天" />
         </div>}
         <div className="chat-messages" ref={messageList} role="log" aria-label="消息记录">
-          {messages.map((message, index) => {
-            const previous = messages[index - 1];
-            const repeated = previous?.senderId === message.senderId &&
-              new Date(previous.sentAt).toDateString() === new Date(message.sentAt).toDateString();
-            const own = message.senderId === actor;
+          {groups.map((group) => {
+            const first = group.messages[0];
+            const own = group.senderId === actor;
             return (
-              <div key={message.id} ref={sent?.id === message.id ? sentRow : undefined}
-                className={`chat-message${own ? ' chat-message-own' : ''}${repeated ? ' chat-message-continuation' : ''}`}>
-                <div className="chat-message-avatar" aria-hidden="true">
-                  {!repeated && <UserAvatar name={message.sender} version={avatars.get(message.senderId)} className="chat-avatar" size={36} />}
+              <div key={first.id} className={`chat-message-group${own ? ' chat-message-group-own' : ''}`}>
+                <div className="chat-message-avatar" title={first.sender} aria-hidden="true">
+                  <UserAvatar name={first.sender} version={avatars.get(group.senderId)} className="chat-avatar" size={36} />
                 </div>
-                <div className="chat-message-content">
-                  {!own && !repeated && <div className="chat-message-name">{message.sender}</div>}
-                  <MessageBubble message={message} own={own} today={today} />
+                <div className="chat-message-group-rows">
+                  {group.messages.map((message, index) => (
+                    <div key={message.id} ref={sent?.id === message.id ? sentRow : undefined}
+                      className={`chat-message${own ? ' chat-message-own' : ''}${index ? ' chat-message-continuation' : ''}`}>
+                      <div className="chat-message-content">
+                        {!own && index === 0 && <div className="chat-message-name">{message.sender}</div>}
+                        <MessageBubble message={message} own={own} today={today} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             );

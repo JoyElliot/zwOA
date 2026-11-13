@@ -21,10 +21,17 @@ export function captureVisibleMessages(messages: HTMLElement | null, history: HT
   const snapshot = new Map<Element, number>();
   if (!history) return snapshot;
   const viewport = history.getBoundingClientRect();
-  for (let row = messages?.lastElementChild; row; row = row.previousElementSibling) {
-    const bounds = row.getBoundingClientRect();
+  for (let group = messages?.lastElementChild; group; group = group.previousElementSibling) {
+    const bounds = group.getBoundingClientRect();
     if (bounds.bottom <= viewport.top) break;
-    if (bounds.top < viewport.bottom) snapshot.set(row, bounds.top);
+    if (bounds.top >= viewport.bottom) continue;
+    const avatar = group.querySelector('.chat-message-avatar');
+    if (avatar) snapshot.set(avatar, avatar.getBoundingClientRect().top);
+    for (let row = group.querySelector('.chat-message-group-rows')?.lastElementChild; row; row = row.previousElementSibling) {
+      const rowBounds = row.getBoundingClientRect();
+      if (rowBounds.bottom <= viewport.top) break;
+      if (rowBounds.top < viewport.bottom) snapshot.set(row, rowBounds.top);
+    }
   }
   return snapshot;
 }
