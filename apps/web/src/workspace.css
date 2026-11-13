@@ -5,17 +5,13 @@
   --text: #1c2435;
   --muted: #5b6579;
   --line: #e5e8f0;
-  --accent: #4057dc;
-  --accent-border: #a2adf4;
-  --selected: #eff1fc;
+  --accent: #006bd6;
+  --accent-border: #92c3f5;
+  --selected: #e8f3ff;
   --hover: #eef0f5;
   --shadow: #24376512;
-  --blue: #4057dc;
-  --blue-tint: #eff1fc;
   --teal: #12716e;
   --teal-tint: #e5f7f4;
-  --purple: #6c4abc;
-  --purple-tint: #f0ebfd;
   color: var(--text);
   background: var(--canvas);
   font-family: "Inter", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
@@ -29,17 +25,13 @@
   --text: #edf0f7;
   --muted: #aeb6c7;
   --line: #2c303a;
-  --accent: #8d9eff;
-  --accent-border: #5969b4;
-  --selected: #232941;
+  --accent: #5eb2ff;
+  --accent-border: #416f9a;
+  --selected: #17304a;
   --hover: #292d38;
   --shadow: #0003;
-  --blue: #a4b0ff;
-  --blue-tint: #2b3457;
   --teal: #75d4c7;
   --teal-tint: #233c40;
-  --purple: #c6b0ff;
-  --purple-tint: #382f50;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -80,7 +72,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   height: 30px;
   flex: 0 0 auto;
   border-radius: 8px;
-  background: #4f63e6;
+  background: #006bd6;
   color: #fff;
   font-size: 16px;
   font-weight: 700;
@@ -172,9 +164,8 @@ h1 { font-size: clamp(27px, 3.5vw, 38px); letter-spacing: 0.025em; }
   border-radius: 10px;
   font-size: 20px;
 }
-.module-icon.blue { color: var(--blue); background: var(--blue-tint); }
+.module-icon.blue { color: var(--accent); background: var(--selected); }
 .module-icon.teal { color: var(--teal); background: var(--teal-tint); }
-.module-icon.purple { color: var(--purple); background: var(--purple-tint); }
 .module-card h2 { margin-top: 16px; color: var(--text); font-size: 18px; }
 .module-card p { min-height: 3.2em; margin-top: 6px; color: var(--muted); line-height: 1.6; }
 .module-action { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--accent); }

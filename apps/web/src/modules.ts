@@ -23,7 +23,7 @@ export const modules = [
     summary: '部门、成员、角色和数据访问范围。',
     features: ['组织架构', '成员管理', '角色与数据权限'],
     Icon: ApartmentOutlined,
-    color: 'purple',
+    color: 'blue',
   },
 ];
 

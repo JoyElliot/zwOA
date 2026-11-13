@@ -15,7 +15,7 @@ function App() {
     <ConfigProvider locale={zhCN} theme={{
       algorithm: dark ? theme.darkAlgorithm : theme.defaultAlgorithm,
       token: {
-        colorPrimary: dark ? '#8d9eff' : '#4057dc',
+          colorPrimary: dark ? '#5eb2ff' : '#006bd6',
         colorBgContainer: dark ? '#20232c' : '#fdfdfe',
         colorText: dark ? '#edf0f7' : '#1c2435',
         colorTextSecondary: dark ? '#aeb6c7' : '#5b6579',
