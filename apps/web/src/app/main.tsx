@@ -1,7 +1,8 @@
 import { Alert, Button, ConfigProvider, Spin, theme } from 'antd';
+import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import zhCN from 'antd/locale/zh_CN';
-import { lazy, StrictMode, Suspense } from 'react';
+import { lazy, StrictMode, Suspense, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Link, Navigate, Route, Routes } from 'react-router';
 import { AuthLayout, LoginPage, PasswordPage, SessionStatus } from '../features/auth/Authentication';
@@ -15,6 +16,18 @@ import './styles.css';
 function App() {
   const { colorTheme, toggleTheme } = useColorTheme();
   const dark = colorTheme === 'dark';
+
+  useEffect(() => {
+    if (!desktop) return;
+    // Give the WebView a frame with the chosen theme before showing the window.
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        const dark = document.documentElement.dataset.theme === 'dark';
+        void invoke('show_desktop_window', { dark }).catch(console.error);
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   return (
     <ConfigProvider locale={zhCN} button={{ autoInsertSpace: false }} theme={{
