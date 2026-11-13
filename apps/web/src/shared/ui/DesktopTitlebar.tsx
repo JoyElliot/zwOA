@@ -1,12 +1,22 @@
 import { BlockOutlined, BorderOutlined, CloseOutlined, MinusOutlined } from '@ant-design/icons';
 import { isTauri } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 const desktopWindow = isTauri() ? getCurrentWindow() : null;
 
 export function TitlebarDragRegion() {
   return <div className="header-spacer" data-tauri-drag-region={desktopWindow ? '' : undefined} />;
+}
+
+export function WorkspaceTitlebar({ children }: { children?: ReactNode }) {
+  return (
+    <header className="workspace-windowbar">
+      {children}
+      <TitlebarDragRegion />
+      <DesktopWindowControls />
+    </header>
+  );
 }
 
 export function DesktopWindowControls() {

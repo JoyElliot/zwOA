@@ -1,9 +1,10 @@
 import { DashboardOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
-import { Alert, Badge, Button, Dropdown, Spin } from 'antd';
+import { Alert, Button, Dropdown, Spin } from 'antd';
 import { invoke } from '@tauri-apps/api/core';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, Route, Routes, useMatch, useNavigate } from 'react-router';
-import { AppHeader, type ThemeControls } from '../shared/ui/AppHeader';
+import { Brand, ThemeToggle, type ThemeControls } from '../shared/ui/AppHeader';
+import { WorkspaceTitlebar } from '../shared/ui/DesktopTitlebar';
 import { signOut } from '../features/auth/session';
 import { desktop, errorMessage } from '../shared/api/client';
 import type { Identity } from '../features/auth/api';
@@ -16,12 +17,6 @@ const ChatPage = lazy(() => import('../features/chat/ChatPage'));
 type Connection =
   | { state: 'loading' | 'offline' }
   | { state: 'online'; overview: WorkbenchOverview };
-
-const connectionLabels = {
-  loading: { status: 'processing', label: '正在连接' },
-  online: { status: 'success', label: '服务在线' },
-  offline: { status: 'error', label: '服务未连接' },
-} as const;
 
 export function Workspace({ theme, identity }: { theme: ThemeControls; identity: Identity }) {
   const [connection, setConnection] = useState<Connection>({ state: 'loading' });
@@ -45,59 +40,69 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
     return () => controller.abort();
   }, [attempt]);
 
-  const connectionLabel = connectionLabels[connection.state];
-
   return (
-    <div className={chatOpen ? 'shell chat-shell' : 'shell'}>
-      <AppHeader {...theme}>
-          <div className="service-status" role="status">
-            <Badge status={connectionLabel.status} text={connectionLabel.label} />
-            {connection.state === 'offline' && (
-              <Button size="small" onClick={() => {
-                setConnection({ state: 'loading' });
-                setAttempt((current) => current + 1);
-              }}>重试</Button>
-            )}
-          </div>
-          <Dropdown trigger={['click']} menu={{ items: [
+    <div className="shell workspace-shell">
+      <aside className="sidebar workspace-sidebar">
+        <Brand />
+        <nav className="navigation" aria-label="业务导航">
+          <NavLink to="/" end aria-label="工作台" title="工作台"><DashboardOutlined /><span className="workspace-nav-label">工作台</span></NavLink>
+          {availableModules.map(({ path, title, Icon }) => (
+            <NavLink key={path} to={path} aria-label={title} title={title}><Icon /><span className="workspace-nav-label">{title}</span></NavLink>
+          ))}
+          {identity.superAdmin && (desktop ? (
+            <button type="button" aria-label="管理面板" title="管理面板"
+              onClick={() => void invoke('open_admin').catch(() => setActionError('无法打开管理窗口，请重试。'))}>
+              <SettingOutlined /><span className="workspace-nav-label">管理面板</span>
+            </button>
+          ) : (
+            <Link to="/admin/accounts" target="_blank" rel="noopener" aria-label="管理面板" title="管理面板">
+              <SettingOutlined /><span className="workspace-nav-label">管理面板</span>
+            </Link>
+          ))}
+        </nav>
+        <div className="workspace-sidebar-footer">
+          <Dropdown trigger={['click']} placement="topLeft" menu={{ items: [
             { key: 'password', label: '修改密码' },
             { key: 'logout', label: '退出登录' },
           ], onClick: ({ key }) => {
             if (key === 'password') void navigate('/account/password');
             else void signOut().catch((error: unknown) => setActionError(errorMessage(error)));
           } }}>
-            <Button type="text" icon={<UserOutlined />} className="account-trigger" title={identity.name}>{identity.name}</Button>
+            <Button type="text" icon={<UserOutlined />} className="account-trigger" aria-label={identity.name} title={identity.name}>
+              <span className="account-name">{identity.name}</span>
+            </Button>
           </Dropdown>
-      </AppHeader>
-      <aside className="sidebar">
-        <nav className="navigation" aria-label="业务导航">
-          <NavLink to="/" end><DashboardOutlined /> 工作台</NavLink>
-          {availableModules.map(({ path, title, Icon }) => (
-            <NavLink key={path} to={path}><Icon /> {title}</NavLink>
-          ))}
-          {identity.superAdmin && (desktop ? (
-            <button type="button" onClick={() => void invoke('open_admin').catch(() => setActionError('无法打开管理窗口，请重试。'))}>
-              <SettingOutlined /> 管理面板
-            </button>
-          ) : (
-            <Link to="/admin/accounts" target="_blank" rel="noopener"><SettingOutlined /> 管理面板</Link>
-          ))}
-        </nav>
+          <ThemeToggle {...theme} />
+        </div>
       </aside>
-      <main className={chatOpen ? 'workspace-main workspace-main-chat' : 'workspace-main'}>
-        {actionError && <Alert className="form-alert" type="error" showIcon title={actionError} closable onClose={() => setActionError('')} />}
-        <Routes>
-          <Route index element={<Workbench overview={connection.state === 'online' ? connection.overview : undefined} availableModules={availableModules} />} />
-          {availableModules.map((module) => module.key === 'chat' ? (
-            <Route key={module.path} path="/chat/:conversationId?" element={
-              <Suspense fallback={<div className="workspace-chat-loading"><Spin aria-label="正在打开消息" /></div>}>
-                <ChatPage key={identity.id} actor={identity.id} />
-              </Suspense>
-            } />
-          ) : <Route key={module.path} path={module.path} element={<ModulePage module={module} />} />)}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
+      <div className="workspace-body">
+        {!chatOpen && <WorkspaceTitlebar />}
+        {actionError && <Alert className="workspace-action-error" type="error" showIcon title={actionError} closable onClose={() => setActionError('')} />}
+        <main className={chatOpen ? 'workspace-main workspace-main-chat' : 'workspace-main'}>
+          <Routes>
+            <Route index element={<>
+              {connection.state === 'offline' && <Alert className="form-alert" type="warning" showIcon title="服务未连接" action={
+                <Button size="small" onClick={() => {
+                  setConnection({ state: 'loading' });
+                  setAttempt((current) => current + 1);
+                }}>重试</Button>
+              } />}
+              <Workbench overview={connection.state === 'online' ? connection.overview : undefined} availableModules={availableModules} />
+            </>} />
+            {availableModules.map((module) => module.key === 'chat' ? (
+              <Route key={module.path} path="/chat/:conversationId?" element={
+                <Suspense fallback={<>
+                  <WorkspaceTitlebar />
+                  <div className="workspace-chat-loading"><Spin aria-label="正在打开消息" /></div>
+                </>}>
+                  <ChatPage key={identity.id} actor={identity.id} />
+                </Suspense>
+              } />
+            ) : <Route key={module.path} path={module.path} element={<ModulePage module={module} />} />)}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+      </div>
     </div>
   );
 }

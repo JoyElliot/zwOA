@@ -183,22 +183,23 @@ export function ConversationThread({ conversation, actor, onBack, onActivity }: 
 
   return (
     <section className="chat-thread" aria-label="聊天内容">
-      <header className="chat-thread-header">
+      <header className="chat-conversation-title">
         <Button className="chat-back" type="text" icon={<ArrowLeftOutlined />} aria-label="返回会话" onClick={onBack} />
         <ChatAvatar title={conversation.title} round size={28} />
-        <div className="chat-thread-heading">
+        <div className="chat-conversation-name">
           <h2 title={conversation.title}>{conversation.title}</h2>
           <span>{conversation.group ? `${conversation.memberCount} 位成员` : '单聊'}</span>
         </div>
         <div className="chat-thread-actions" role="group" aria-label="会话操作">
           <Tooltip title="暂未支持通话">
-            <span tabIndex={0} aria-label="通话，暂未支持"><Button type="text" size="small" icon={<PhoneOutlined />} aria-label="通话" disabled /></span>
+            <span tabIndex={0} aria-label="通话，暂未支持">
+              <Button type="text" size="small" icon={<PhoneOutlined />} aria-label="通话" disabled />
+            </span>
           </Tooltip>
-          {conversation.group && <Tooltip title="暂未支持群管理">
-            <span tabIndex={0} aria-label="群管理，暂未支持"><Button type="text" size="small" disabled>群管理</Button></span>
-          </Tooltip>}
           <Tooltip title="暂未支持会话设置">
-            <span tabIndex={0} aria-label="会话设置，暂未支持"><Button type="text" size="small" icon={<SettingOutlined />} aria-label="会话设置" disabled /></span>
+            <span tabIndex={0} aria-label="会话设置，暂未支持">
+              <Button type="text" size="small" icon={<SettingOutlined />} aria-label="会话设置" disabled />
+            </span>
           </Tooltip>
         </div>
       </header>

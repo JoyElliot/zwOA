@@ -4,6 +4,7 @@ import { Alert, Badge, Button, Empty, Input, Spin } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ApiError, errorMessage } from '../../shared/api/client';
+import { WorkspaceTitlebar } from '../../shared/ui/DesktopTitlebar';
 import { getConversations, type Conversation } from './api';
 import { ChatAvatar, ConversationThread } from './ConversationThread';
 import { CreateConversation } from './CreateConversation';
@@ -59,16 +60,18 @@ export default function ChatPage({ actor }: { actor: number }) {
 
   return (
     <div className={`chat-layout${conversationId ? ' chat-show-thread' : ''}`}>
+      <WorkspaceTitlebar>
+        <div className="chat-list-heading">
+          <h1>消息</h1>
+          <div className="chat-list-actions">
+            <Button type="text" icon={<ReloadOutlined />} aria-label="刷新会话" title="刷新会话" onClick={() => void refresh()} />
+            <Button type="primary" icon={<PlusOutlined />} aria-label="发起会话" onClick={() => setCreating(true)}>发起</Button>
+          </div>
+        </div>
+      </WorkspaceTitlebar>
       <ProCard className="chat-inbox" styles={{ body: { display: 'flex', flexDirection: 'column', minHeight: 0, padding: 0 } }}>
         <section className="chat-list-panel" aria-label="会话列表">
           <div className="chat-list-header">
-            <div className="chat-list-heading">
-              <h1>消息</h1>
-              <div className="chat-list-actions">
-                <Button type="text" icon={<ReloadOutlined />} aria-label="刷新会话" title="刷新会话" onClick={() => void refresh()} />
-                <Button type="primary" icon={<PlusOutlined />} aria-label="发起会话" onClick={() => setCreating(true)}>发起</Button>
-              </div>
-            </div>
             <Input aria-label="搜索会话" placeholder="搜索会话" prefix={<SearchOutlined />} allowClear maxLength={80}
               value={search} onChange={(event) => setSearch(event.target.value)} />
           </div>
@@ -101,16 +104,19 @@ export default function ChatPage({ actor }: { actor: number }) {
         </section>
       </ProCard>
       {selection ? (
-        <ConversationThread key={selection.id} conversation={selection} actor={actor} onBack={() => void navigate('/chat')} onActivity={refresh} />
+        <ConversationThread key={selection.id} conversation={selection} actor={actor}
+          onBack={() => void navigate('/chat')} onActivity={refresh} />
       ) : (
-        <section className="chat-thread chat-center" aria-label="聊天内容">
-          {conversationId && !conversations && !error ? <Spin aria-label="正在打开会话" /> : (
-            <Empty image={<MessageOutlined />} description={conversationId
-              ? error || '找不到此会话'
-              : '选择左侧会话开始聊天'}>
-              {conversationId && <Link className="back-link" to="/chat">返回会话列表</Link>}
-            </Empty>
-          )}
+        <section className="chat-thread" aria-label="聊天内容">
+          <div className="chat-center">
+            {conversationId && !conversations && !error ? <Spin aria-label="正在打开会话" /> : (
+              <Empty image={<MessageOutlined />} description={conversationId
+                ? error || '找不到此会话'
+                : '选择左侧会话开始聊天'}>
+                {conversationId && <Link className="back-link" to="/chat">返回会话列表</Link>}
+              </Empty>
+            )}
+          </div>
         </section>
       )}
       {creating && <CreateConversation onClose={() => setCreating(false)} onCreate={async (id) => {
