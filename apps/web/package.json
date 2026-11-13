@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "6.3.4",
+    "@ant-design/pro-components": "3.1.15-9",
     "@tauri-apps/api": "2.12.4",
     "antd": "6.7.0",
     "react": "19.3.1",
