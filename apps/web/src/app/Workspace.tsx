@@ -1,10 +1,12 @@
-import { DashboardOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
-import { Alert, Button, Dropdown, Spin } from 'antd';
+import { DashboardOutlined, SettingOutlined } from '@ant-design/icons';
+import { Alert, Button, Spin } from 'antd';
 import { invoke } from '@tauri-apps/api/core';
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { Link, Navigate, NavLink, Route, Routes, useMatch, useNavigate } from 'react-router';
-import { Brand, ThemeToggle, type ThemeControls } from '../shared/ui/AppHeader';
+import { Link, Navigate, NavLink, Route, Routes, useMatch } from 'react-router';
+import { Brand, type ThemeControls } from '../shared/ui/AppHeader';
 import { WorkspaceTitlebar } from '../shared/ui/DesktopTitlebar';
+import { AccountMenu } from '../features/account/AccountMenu';
+import { AccountPasswordPage, ProfilePage, SettingsPage } from '../features/account/AccountPages';
 import { logout, type Identity } from '../features/auth/api';
 import { desktop, desktopSessionScope, errorMessage } from '../shared/api/client';
 import { getWorkbenchOverview, type WorkbenchOverview } from '../features/workbench/api';
@@ -21,7 +23,6 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
   const [connection, setConnection] = useState<Connection>({ state: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const [actionError, setActionError] = useState('');
-  const navigate = useNavigate();
   const chatRoute = useMatch('/chat/*');
   const availableModules = modules.filter(({ key }) => identity.superAdmin ||
     identity.permissions.includes(`${key}.access`) || identity.adminModules.includes(key));
@@ -60,18 +61,8 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
           ))}
         </nav>
         <div className="workspace-sidebar-footer">
-          <Dropdown trigger={['click']} placement="topLeft" menu={{ items: [
-            { key: 'password', label: '修改密码' },
-            { key: 'logout', label: '退出登录' },
-          ], onClick: ({ key }) => {
-            if (key === 'password') void navigate('/account/password');
-            else void logout().catch((error: unknown) => setActionError(errorMessage(error)));
-          } }}>
-            <Button type="text" icon={<UserOutlined />} className="account-trigger" aria-label={identity.name} title={identity.name}>
-              <span className="account-name">{identity.name}</span>
-            </Button>
-          </Dropdown>
-          <ThemeToggle {...theme} />
+          <AccountMenu name={identity.name} username={identity.username} {...theme}
+            onLogout={() => void logout().catch((error: unknown) => setActionError(errorMessage(error)))} />
         </div>
       </aside>
       <div className="workspace-body">
@@ -88,6 +79,9 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
               } />}
               <Workbench overview={connection.state === 'online' ? connection.overview : undefined} availableModules={availableModules} />
             </>} />
+            <Route path="/account/profile" element={<ProfilePage identity={identity} />} />
+            <Route path="/account/settings" element={<SettingsPage {...theme} />} />
+            <Route path="/account/password" element={<AccountPasswordPage />} />
             {availableModules.map((module) => module.key === 'chat' ? (
               <Route key={module.path} path="/chat/:conversationId?" element={
                 <Suspense fallback={<>

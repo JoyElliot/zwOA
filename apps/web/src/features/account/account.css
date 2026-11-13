@@ -1,0 +1,100 @@
+.account-trigger.ant-btn {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 50px;
+  justify-content: flex-start;
+  gap: 10px;
+  padding-inline: 9px;
+  background: color-mix(in srgb, var(--surface) 55%, var(--hover));
+}
+
+.account-trigger .account-trigger-avatar { flex: none; background: var(--selected); color: var(--accent); }
+.account-trigger-details {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+  line-height: 1.3;
+}
+.account-name, .account-login-name { overflow: hidden; text-overflow: ellipsis; }
+.account-login-name { color: var(--muted); font-size: 12px; }
+
+.account-dropdown .account-menu {
+  --account-logout-color: #b42335;
+  max-height: calc(100dvh - 80px);
+  overflow: auto;
+  padding: 0;
+  border: 0;
+  box-shadow: 0 6px 20px color-mix(in srgb, #000 24%, transparent);
+  background: color-mix(in srgb, var(--surface) 55%, var(--hover));
+}
+
+:root[data-theme='dark'] .account-dropdown .account-menu { --account-logout-color: #ff939e; }
+
+.ant-dropdown .account-menu .ant-dropdown-menu-item-divider { margin: 0; }
+
+.ant-dropdown .account-menu .account-menu-item {
+  min-height: 38px;
+  border-radius: 0;
+  padding-inline: 12px;
+}
+
+.ant-dropdown .account-menu .account-menu-item:hover,
+.ant-dropdown .account-menu .account-menu-item:focus-visible {
+  background: var(--hover);
+}
+
+.ant-dropdown .account-menu:focus-visible { outline: none; }
+.ant-dropdown .account-menu .account-menu-item:focus-visible {
+  outline: none;
+  color: var(--accent);
+}
+
+.ant-dropdown .account-menu .account-menu-logout:is(:hover, :focus-visible, .ant-dropdown-menu-item-active) {
+  background: color-mix(in srgb, var(--account-logout-color) 14%, transparent);
+  color: var(--account-logout-color);
+}
+
+@media (forced-colors: active) {
+  .ant-dropdown .account-menu .account-menu-item:focus-visible { outline: 2px solid Highlight; outline-offset: -2px; }
+}
+
+.account-page {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  width: min(100%, 880px);
+}
+
+.account-page > h1 { grid-column: 1 / -1; margin-block: 4px 6px; }
+.account-panel { min-width: 0; border-color: var(--line); }
+.account-muted { color: var(--muted); }
+
+.profile-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.profile-heading h2, .profile-team-name { min-width: 0; overflow-wrap: anywhere; }
+.profile-avatar.ant-avatar { flex: none; background: var(--selected); color: var(--accent); }
+.profile-teams { margin: 0; padding: 0; list-style: none; }
+.profile-teams li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.profile-teams li + li { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.profile-team-labels { display: flex; align-items: center; gap: 6px; }
+.profile-team-labels .ant-tag { margin-inline: 0; }
+
+.account-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.account-setting-link:hover { color: var(--accent); }
+.profile-password-link { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.account-password { grid-template-columns: minmax(0, 1fr); max-width: 420px; }
+.account-password .back-link { justify-self: start; }
+
+@media (max-width: 640px) {
+  .account-dropdown.ant-dropdown { width: min(168px, calc(100vw - 12px)); }
+  .account-trigger.ant-btn { justify-content: center; padding-inline: 0; }
+  .account-trigger-details { display: none; }
+  .account-page { grid-template-columns: minmax(0, 1fr); }
+}

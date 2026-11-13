@@ -61,9 +61,6 @@ function AppRoutes({ theme }: { theme: ThemeControls }) {
           action={!adminWindow && <Link to="/"><Button>返回工作台</Button></Link>} />
       </AuthLayout>
     )} />
-    <Route path="/account/password" element={<AuthLayout theme={theme}><div className="password-layout">
-      <Link className="back-link" to="/">返回工作台</Link><PasswordPage required={false} />
-    </div></AuthLayout>} />
     <Route path="/*" element={adminWindow ? <Navigate to="/admin/accounts" replace /> : <Workspace theme={theme} identity={identity} />} />
   </Routes>;
 }

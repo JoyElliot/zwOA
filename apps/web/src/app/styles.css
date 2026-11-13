@@ -172,14 +172,12 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .workspace-sidebar .brand strong { font-size: 17px; }
 .workspace-sidebar .navigation { min-height: 0; overflow: auto; padding: 10px 12px; }
 .workspace-sidebar-footer {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  position: relative;
+  flex: none;
   margin-top: auto;
-  padding: 12px;
+  padding: 8px;
   border-top: 1px solid var(--line);
 }
-.workspace-sidebar-footer .theme-toggle { flex: none; }
 .workspace-body { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .workspace-windowbar {
   position: relative;
@@ -203,8 +201,6 @@ h1, h2, p { margin: 0; }
 h1 { font-size: clamp(27px, 3.5vw, 38px); letter-spacing: 0.025em; }
 .back-link { color: var(--accent); font-size: 14px; }
 
-.account-trigger.ant-btn { flex: 1; min-width: 0; justify-content: flex-start; padding-inline: 8px; }
-.account-name { overflow: hidden; text-overflow: ellipsis; }
 .form-alert { margin-bottom: 16px; }
 
 @media (max-width: 950px) {
@@ -225,16 +221,6 @@ h1 { font-size: clamp(27px, 3.5vw, 38px); letter-spacing: 0.025em; }
   .workspace-sidebar .brand-name, .workspace-nav-label { display: none; }
   .workspace-sidebar .navigation { flex-direction: column; padding: 8px 5px; }
   .workspace-sidebar .navigation a, .workspace-sidebar .navigation button { justify-content: center; min-height: 36px; }
-  .workspace-sidebar-footer { flex-direction: column; padding: 8px 4px; }
-  .workspace-sidebar-footer .account-trigger.ant-btn {
-    flex: none;
-    flex-direction: column;
-    justify-content: center;
-    gap: 1px;
-    width: 44px;
-    height: 38px;
-    padding: 2px;
-  }
-  .workspace-sidebar .account-name { max-width: 100%; font-size: 10px; line-height: 14px; }
+  .workspace-sidebar-footer { padding: 4px; }
   .workspace-body > .workspace-main:not(.workspace-main-chat) { padding-inline: 14px; }
 }
