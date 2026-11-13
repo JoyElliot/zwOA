@@ -1,7 +1,7 @@
 {
   "identifier": "window-controls",
-  "description": "允许主窗口的内嵌标题栏操作窗口",
-  "windows": ["main"],
+  "description": "允许工作台和管理面板的内嵌标题栏操作窗口",
+  "windows": ["main", "admin"],
   "permissions": [
     "core:event:allow-listen",
     "core:event:allow-unlisten",
