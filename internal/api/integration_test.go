@@ -28,12 +28,17 @@ func TestOrganizationAccess(t *testing.T) {
 	if err := store.Bootstrap(t.Context(), "root-admin", "管理员", "bootstrap-password"); err != nil {
 		t.Fatal(err)
 	}
-	server := New(httpserver.Config{Address: "127.0.0.1:0", AllowedOrigins: []string{desktopOrigin}, SecureCookies: true}, store, chat.New(db))
+	server := New(httpserver.Config{
+		Address: "127.0.0.1:0", AllowedOrigins: []string{desktopOrigin}, SecureCookies: true, EnableOpenAPI: true,
+	}, store, chat.New(db))
 	if err := server.Start(); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = server.Shutdown() })
 	client := &http.Client{Timeout: 5 * time.Second}
+	t.Run("OpenAPI", func(t *testing.T) {
+		checkOpenAPI(t, client, "http://"+server.GetListenedAddress()+"/openapi.json")
+	})
 	var revision int64
 
 	call := func(method, path, body string, cookie *http.Cookie, headers map[string]string, want int) (*http.Response, []byte) {

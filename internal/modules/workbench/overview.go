@@ -13,8 +13,9 @@ type OverviewReq struct {
 }
 
 type OverviewRes struct {
-	Name    string `json:"name" dc:"系统名称"`
-	Version string `json:"version" dc:"应用版本"`
+	gmeta.Meta `description:"查询成功"`
+	Name       string `json:"name" dc:"系统名称"`
+	Version    string `json:"version" dc:"应用版本"`
 }
 
 func (Controller) Overview(context.Context, *OverviewReq) (*OverviewRes, error) {

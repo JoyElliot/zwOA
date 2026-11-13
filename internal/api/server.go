@@ -23,6 +23,9 @@ func New(config httpserver.Config, accounts *organization.Store, messages *chat.
 		group.Middleware(ghttp.MiddlewareHandlerResponse)
 		group.Bind(workbench.Controller{})
 	})
+	if config.EnableOpenAPI {
+		describeOpenAPI(server.GetOpenApi())
+	}
 	return server
 }
 

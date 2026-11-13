@@ -11,8 +11,8 @@ import (
 )
 
 type SendInput struct {
-	Text       string `json:"text"`
-	RequestKey string `json:"requestKey"`
+	Text       string `json:"text" v:"required"`
+	RequestKey string `json:"requestKey" v:"required" pattern:"^[a-f0-9]{32}$" dc:"客户端生成的 32 位小写十六进制请求键"`
 }
 
 const messageColumns = `m.id, m.sender_id, a.name, m.text, m.sent_at`

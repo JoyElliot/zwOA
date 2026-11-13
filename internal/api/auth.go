@@ -14,6 +14,20 @@ import (
 
 const sessionCookie = "zwoa_session"
 
+type loginInput struct {
+	Username string `json:"username" v:"required"`
+	Password string `json:"password" v:"required" format:"password" dc:"非空，最多 256 字节"`
+}
+
+type desktopLoginResult struct {
+	Token string `json:"token" dc:"不透明的 Bearer 会话令牌，登录后 12 小时有效"`
+}
+
+type passwordInput struct {
+	Current string `json:"current" v:"required" format:"password"`
+	Next    string `json:"next" v:"required|min-length:12" format:"password" dc:"至少 12 个字符，最多 256 字节"`
+}
+
 type authentication struct {
 	store  *organization.Store
 	config httpserver.Config
@@ -31,10 +45,7 @@ func bindAuth(server *ghttp.Server, api authentication) {
 
 func (api authentication) login(desktop bool) ghttp.HandlerFunc {
 	return func(r *ghttp.Request) {
-		var input struct {
-			Username string `json:"username"`
-			Password string `json:"password"`
-		}
+		var input loginInput
 		if err := readJSON(r, &input); err != nil {
 			writeError(r, err)
 			return
@@ -49,7 +60,7 @@ func (api authentication) login(desktop bool) ghttp.HandlerFunc {
 			return
 		}
 		if desktop {
-			writeResult(r, map[string]string{"token": token}, nil)
+			writeResult(r, desktopLoginResult{Token: token}, nil)
 			return
 		}
 		api.setCookie(r, token, int(organization.SessionLifetime.Seconds()))
@@ -109,10 +120,7 @@ func (api authentication) logout(r *ghttp.Request) {
 }
 
 func (api authentication) password(r *ghttp.Request, account organization.Account) {
-	var input struct {
-		Current string `json:"current"`
-		Next    string `json:"next"`
-	}
+	var input passwordInput
 	err := readJSON(r, &input)
 	if err == nil {
 		err = api.store.ChangePassword(r.Context(), account.ID, input.Current, input.Next)

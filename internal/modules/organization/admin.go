@@ -29,8 +29,8 @@ type ManagedAccount struct {
 
 type AccountInput struct {
 	Username string  `json:"username"`
-	Name     string  `json:"name"`
-	Password string  `json:"password"`
+	Name     string  `json:"name" v:"required"`
+	Password string  `json:"password" format:"password" writeOnly:"true"`
 	Active   bool    `json:"active"`
 	GroupIDs []int64 `json:"groupIds"`
 }

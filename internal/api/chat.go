@@ -8,6 +8,14 @@ import (
 	"github.com/gogf/gf/v2/net/ghttp"
 )
 
+type conversationResult struct {
+	ID int64 `json:"id"`
+}
+
+type readInput struct {
+	MessageID int64 `json:"messageId" v:"required|min:1" dc:"该会话中的消息 ID"`
+}
+
 func bindChat(server *ghttp.Server, store *chat.Store, auth authentication) {
 	handle := func(fn func(*ghttp.Request, int64)) ghttp.HandlerFunc {
 		return auth.authorized(false, func(r *ghttp.Request, account organization.Account) {
@@ -39,7 +47,7 @@ func bindChat(server *ghttp.Server, store *chat.Store, auth authentication) {
 				return
 			}
 			id, err := store.Create(r.Context(), actor, input)
-			writeResult(r, map[string]int64{"id": id}, err)
+			writeResult(r, conversationResult{ID: id}, err)
 		}))
 		group.GET("/conversations/:id/messages", handle(func(r *ghttp.Request, actor int64) {
 			id, err := recordID(r)
@@ -68,9 +76,7 @@ func bindChat(server *ghttp.Server, store *chat.Store, auth authentication) {
 		}))
 		group.PUT("/conversations/:id/read", handle(func(r *ghttp.Request, actor int64) {
 			id, err := recordID(r)
-			var input struct {
-				MessageID int64 `json:"messageId"`
-			}
+			var input readInput
 			if err == nil {
 				err = readJSON(r, &input)
 			}

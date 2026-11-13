@@ -38,14 +38,14 @@ type Conversation struct {
 	MemberCount int    `json:"memberCount"`
 	LastText    string `json:"lastText"`
 	LastSender  string `json:"lastSender"`
-	UpdatedAt   int64  `json:"updatedAt"`
+	UpdatedAt   int64  `json:"updatedAt" dc:"Unix 毫秒时间戳"`
 	Unread      int    `json:"unread"`
 }
 
 type CreateInput struct {
 	Title      string  `json:"title"`
-	MemberIDs  []int64 `json:"memberIds"`
-	RequestKey string  `json:"requestKey"`
+	MemberIDs  []int64 `json:"memberIds" v:"required"`
+	RequestKey string  `json:"requestKey" v:"required" pattern:"^[a-f0-9]{32}$" dc:"客户端生成的 32 位小写十六进制请求键"`
 }
 
 type Message struct {
@@ -53,7 +53,7 @@ type Message struct {
 	SenderID int64  `json:"senderId"`
 	Sender   string `json:"sender"`
 	Text     string `json:"text"`
-	SentAt   int64  `json:"sentAt"`
+	SentAt   int64  `json:"sentAt" dc:"Unix 毫秒时间戳"`
 }
 
 type MessagePage struct {

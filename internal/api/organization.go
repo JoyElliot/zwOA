@@ -9,6 +9,10 @@ import (
 	"github.com/gogf/gf/v2/net/ghttp"
 )
 
+type moduleAdminsInput struct {
+	AdminIDs []int64 `json:"adminIds" dc:"完整的管理员账户 ID 列表；空列表清除授权"`
+}
+
 func bindOrganization(server *ghttp.Server, store *organization.Store, api authentication) {
 	server.Group("/api/v1/admin", func(group *ghttp.RouterGroup) {
 		group.GET("/overview", api.authorized(true, overview(store)))
@@ -33,9 +37,7 @@ func overview(store *organization.Store) func(*ghttp.Request, organization.Accou
 
 func moduleAdmins(store *organization.Store) func(*ghttp.Request, organization.Account) {
 	return func(r *ghttp.Request, _ organization.Account) {
-		var input struct {
-			AdminIDs []int64 `json:"adminIds"`
-		}
+		var input moduleAdminsInput
 		revision, err := adminRevision(r)
 		if err == nil {
 			err = readJSON(r, &input)
