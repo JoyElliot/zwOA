@@ -1,4 +1,4 @@
-import { ArrowRightOutlined, DashboardOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, DashboardOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons';
 import { Badge, Button, Card } from 'antd';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, Route, Routes } from 'react-router';
@@ -15,7 +15,7 @@ const connectionLabels = {
   offline: { status: 'error', label: '服务未连接' },
 } as const;
 
-export function Workspace() {
+export function Workspace({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: () => void }) {
   const [connection, setConnection] = useState<Connection>({ state: 'loading' });
   const [attempt, setAttempt] = useState(0);
 
@@ -35,21 +35,13 @@ export function Workspace() {
 
   return (
     <div className="shell">
-      <aside className="sidebar">
+      <header className="workspace-header">
         <Link className="brand" to="/">
           <span className="brand-mark" aria-hidden="true">中</span>
           <span><strong>中网联合</strong><small>OA / CRM</small></span>
         </Link>
-        <nav className="navigation" aria-label="业务导航">
-          <NavLink to="/" end><DashboardOutlined /> 工作台</NavLink>
-          {modules.map(({ path, title, Icon }) => (
-            <NavLink key={path} to={path}><Icon /> {title}</NavLink>
-          ))}
-        </nav>
-      </aside>
-      <div className="workspace">
-        <header className="workspace-header">
-          <span>内部工作空间</span>
+        <div className="header-spacer" />
+        <div className="header-actions">
           <div className="service-status" role="status">
             <Badge status={connectionLabel.status} text={connectionLabel.label} />
             {connection.state === 'offline' && (
@@ -59,17 +51,34 @@ export function Workspace() {
               }}>重试</Button>
             )}
           </div>
-        </header>
-        <main className="workspace-main">
-          <Routes>
-            <Route index element={<Workbench connection={connection} />} />
-            {modules.map((module) => (
-              <Route key={module.path} path={module.path} element={<ModulePage module={module} />} />
-            ))}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-      </div>
+          <button
+            className="theme-toggle"
+            type="button"
+            title={dark ? '切换为浅色' : '切换为深色'}
+            aria-label={dark ? '切换为浅色' : '切换为深色'}
+            onClick={onToggleTheme}
+          >
+            {dark ? <SunOutlined /> : <MoonOutlined />}
+          </button>
+        </div>
+      </header>
+      <aside className="sidebar">
+        <nav className="navigation" aria-label="业务导航">
+          <NavLink to="/" end><DashboardOutlined /> 工作台</NavLink>
+          {modules.map(({ path, title, Icon }) => (
+            <NavLink key={path} to={path}><Icon /> {title}</NavLink>
+          ))}
+        </nav>
+      </aside>
+      <main className="workspace-main">
+        <Routes>
+          <Route index element={<Workbench connection={connection} />} />
+          {modules.map((module) => (
+            <Route key={module.path} path={module.path} element={<ModulePage module={module} />} />
+          ))}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
     </div>
   );
 }
