@@ -1,9 +1,13 @@
-import { ArrowRightOutlined, DashboardOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons';
-import { Badge, Button, Card } from 'antd';
+import { ArrowRightOutlined, DashboardOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { Alert, Badge, Button, Card, Dropdown } from 'antd';
+import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
-import { Link, Navigate, NavLink, Route, Routes } from 'react-router';
+import { Link, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router';
+import { AppHeader, type ThemeControls } from './AppHeader';
+import { signOut } from './Authentication';
+import { desktop, errorMessage } from './api/client';
+import type { Identity } from './api/organization';
 import { getWorkbenchOverview, type WorkbenchOverview } from './api/workbench';
-import { DesktopWindowControls, TitlebarDragRegion } from './DesktopTitlebar';
 import { modules, type WorkspaceModule } from './modules';
 
 type Connection =
@@ -16,9 +20,13 @@ const connectionLabels = {
   offline: { status: 'error', label: '服务未连接' },
 } as const;
 
-export function Workspace({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: () => void }) {
+export function Workspace({ theme, identity }: { theme: ThemeControls; identity: Identity }) {
   const [connection, setConnection] = useState<Connection>({ state: 'loading' });
   const [attempt, setAttempt] = useState(0);
+  const [actionError, setActionError] = useState('');
+  const navigate = useNavigate();
+  const availableModules = modules.filter(({ key }) => identity.superAdmin ||
+    identity.permissions.includes(`${key}.access`) || identity.adminModules.includes(key));
 
   useEffect(() => {
     const controller = new AbortController();
@@ -36,13 +44,7 @@ export function Workspace({ dark, onToggleTheme }: { dark: boolean; onToggleThem
 
   return (
     <div className="shell">
-      <header className="workspace-header">
-        <Link className="brand" to="/">
-          <span className="brand-mark" aria-hidden="true">中</span>
-          <span><strong>中网联合</strong><small>OA / CRM</small></span>
-        </Link>
-        <TitlebarDragRegion />
-        <div className="header-actions">
+      <AppHeader {...theme}>
           <div className="service-status" role="status">
             <Badge status={connectionLabel.status} text={connectionLabel.label} />
             {connection.state === 'offline' && (
@@ -52,30 +54,36 @@ export function Workspace({ dark, onToggleTheme }: { dark: boolean; onToggleThem
               }}>重试</Button>
             )}
           </div>
-          <button
-            className="theme-toggle"
-            type="button"
-            title={dark ? '切换为浅色' : '切换为深色'}
-            aria-label={dark ? '切换为浅色' : '切换为深色'}
-            onClick={onToggleTheme}
-          >
-            {dark ? <SunOutlined /> : <MoonOutlined />}
-          </button>
-        </div>
-        <DesktopWindowControls />
-      </header>
+          <Dropdown trigger={['click']} menu={{ items: [
+            { key: 'password', label: '修改密码' },
+            { key: 'logout', label: '退出登录' },
+          ], onClick: ({ key }) => {
+            if (key === 'password') void navigate('/account/password');
+            else void signOut().catch((error: unknown) => setActionError(errorMessage(error)));
+          } }}>
+            <Button type="text" icon={<UserOutlined />} className="account-trigger" title={identity.name}>{identity.name}</Button>
+          </Dropdown>
+      </AppHeader>
       <aside className="sidebar">
         <nav className="navigation" aria-label="业务导航">
           <NavLink to="/" end><DashboardOutlined /> 工作台</NavLink>
-          {modules.map(({ path, title, Icon }) => (
+          {availableModules.map(({ path, title, Icon }) => (
             <NavLink key={path} to={path}><Icon /> {title}</NavLink>
+          ))}
+          {identity.superAdmin && (desktop ? (
+            <button type="button" onClick={() => void invoke('open_admin').catch(() => setActionError('无法打开管理窗口，请重试。'))}>
+              <SettingOutlined /> 管理面板
+            </button>
+          ) : (
+            <Link to="/admin/accounts" target="_blank" rel="noopener"><SettingOutlined /> 管理面板</Link>
           ))}
         </nav>
       </aside>
       <main className="workspace-main">
+        {actionError && <Alert className="form-alert" type="error" showIcon title={actionError} closable onClose={() => setActionError('')} />}
         <Routes>
-          <Route index element={<Workbench connection={connection} />} />
-          {modules.map((module) => (
+          <Route index element={<Workbench connection={connection} availableModules={availableModules} />} />
+          {availableModules.map((module) => (
             <Route key={module.path} path={module.path} element={<ModulePage module={module} />} />
           ))}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -85,15 +93,15 @@ export function Workspace({ dark, onToggleTheme }: { dark: boolean; onToggleThem
   );
 }
 
-function Workbench({ connection }: { connection: Connection }) {
+function Workbench({ connection, availableModules }: { connection: Connection; availableModules: WorkspaceModule[] }) {
   return (
     <>
       <section className="welcome">
         <h1>工作台</h1>
-        <p>从这里进入客户管理、办公审批和组织管理。</p>
+        <p>{availableModules.length > 0 ? '选择一个功能模块。' : '当前账户没有可用的功能模块，请联系管理员分配权限。'}</p>
       </section>
       <div className="module-grid">
-        {modules.map(({ path, title, summary, Icon, color }) => (
+        {availableModules.map(({ path, title, summary, Icon, color }) => (
           <Link className="module-link" key={path} to={path}>
             <Card className="module-card">
               <span className={`module-icon ${color}`} aria-hidden="true"><Icon /></span>

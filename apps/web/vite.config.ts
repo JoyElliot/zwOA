@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
       port: 5273,
       strictPort: true,
       proxy: {
-        '/api': ZWOA_DEV_API_TARGET || 'http://127.0.0.1:8720',
+        '/api': { target: ZWOA_DEV_API_TARGET || 'http://127.0.0.1:8720', changeOrigin: false },
       },
     },
   };
