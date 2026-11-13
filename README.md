@@ -9,14 +9,18 @@ zwOA 是面向公司内部使用的办公与客户管理平台。本项目为公
 | 路径 | 职责 |
 | --- | --- |
 | `cmd/api` | GoFrame API 进程入口 |
-| `internal/platform/httpserver` | HTTP 配置、健康检查和跨域策略 |
+| `internal/api` | HTTP 路由、认证、跨域策略、请求解析和响应 |
+| `internal/platform/httpserver` | GoFrame 服务配置和健康检查 |
+| `internal/platform/sqlite` | SQLite 连接配置和按版本执行的迁移 |
 | `internal/modules/workbench` | 工作台业务接口 |
 | `internal/modules/chat` | 单聊、群聊、消息历史和已读位置 |
-| `internal/modules/organization` | 账户、会话、权限组、团队与项目、模块管理员和 SQLite 数据持久化 |
-| `apps/web` | React、TypeScript、Ant Design 和 ProComponents 共享界面，供浏览器和桌面端使用 |
+| `internal/modules/organization` | 账户、登录会话、权限组、团队与项目、模块管理员 |
+| `apps/web/src/app` | Web 入口、应用路由、工作区外壳和全局主题 |
+| `apps/web/src/features` | 登录与改密、组织管理、消息和工作台，各自维护界面、样式及接口 |
+| `apps/web/src/shared` | 浏览器和 Windows 共用的 HTTP 客户端、顶栏和窗口控件 |
 | `apps/desktop` | Tauri 2 桌面窗口和 Windows 构建配置 |
 
-后端按业务划分 Go 包，在一个服务进程内运行。后续可在 `internal/modules` 增加 `crm`、`approvals`、`organization`，并通过 `/api/v1` 暴露接口。数据访问与授权应留在后端，客户端共享 HTTP 契约。将来接入 Android 和 iOS 时，可复用 API，并按设备验证交互和平台能力。
+后端进程打开一份 SQLite 数据库，并把连接交给各业务模块。模块内部维护业务 SQL 和数据访问规则，数据库结构变更放在 `internal/platform/sqlite/migrations`。业务路由统一挂在 `/api/v1`。网页和 Windows 共用 React 界面与 HTTP 契约。
 
 ## 本地开发
 
