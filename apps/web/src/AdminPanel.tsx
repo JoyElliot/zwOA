@@ -221,8 +221,13 @@ function AdminEditor({ editor, data, onClose, onRefresh, onSaved }: { editor: Ed
             <Input autoComplete="off" maxLength={40} disabled={!!editor.record} />
           </Form.Item>
           <Form.Item name="name" label="姓名" rules={[nameRule]}><Input maxLength={80} /></Form.Item>
-          <Form.Item name="password" label={editor.record ? '重置临时密码' : '临时密码'} extra={editor.record ? '留空保留当前密码。重置后，账户需要重新登录并修改密码。' : '将临时密码交给账户本人，首次登录时会要求更换。'}
-            rules={[{ required: !editor.record, min: 12, message: '请输入至少 12 个字符的临时密码' }]}>
+          <Form.Item name="password" label={editor.record ? '重置密码' : '密码'} extra={editor.record ? '留空保留当前密码。重置后，账户需用新密码重新登录。' : undefined}
+            rules={[
+              { required: !editor.record, message: '请输入密码' },
+              { validator: (_, value?: string) => !value || new TextEncoder().encode(value).length <= 256
+                ? Promise.resolve()
+                : Promise.reject(new Error('密码不能超过 256 字节')) },
+            ]}>
             <Input.Password autoComplete="new-password" maxLength={256} />
           </Form.Item>
           <Form.Item name="groupIds" label="权限组"><Select mode="multiple" options={data.groups.map(({ name, id }) => ({ label: name, value: id }))} /></Form.Item>

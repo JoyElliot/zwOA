@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     password_hash TEXT NOT NULL,
     super_admin INTEGER NOT NULL DEFAULT 0 CHECK (super_admin IN (0, 1)),
     active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
-    must_change_password INTEGER NOT NULL DEFAULT 1 CHECK (must_change_password IN (0, 1))
+    must_change_password INTEGER NOT NULL DEFAULT 0 CHECK (must_change_password IN (0, 1))
 );
 CREATE UNIQUE INDEX IF NOT EXISTS one_super_admin ON accounts(super_admin) WHERE super_admin = 1;
 

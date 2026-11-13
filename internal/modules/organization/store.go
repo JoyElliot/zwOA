@@ -90,9 +90,14 @@ func (s *Store) migrate(ctx context.Context) error {
 			if _, err := tx.ExecContext(ctx, chat.Schema); err != nil {
 				return err
 			}
-			_, err := tx.ExecContext(ctx, `PRAGMA user_version = 2`)
-			return err
+			fallthrough
 		case 2:
+			if _, err := tx.ExecContext(ctx, `UPDATE accounts SET must_change_password = 0 WHERE must_change_password = 1`); err != nil {
+				return err
+			}
+			_, err := tx.ExecContext(ctx, `PRAGMA user_version = 3`)
+			return err
+		case 3:
 			return nil
 		default:
 			return fmt.Errorf("无法读取数据库版本 %d", version)

@@ -79,7 +79,8 @@ func TestOrganizationAccess(t *testing.T) {
 	call("OPTIONS", "/auth/logout", "", admin, map[string]string{"Access-Control-Request-Method": "POST"}, 204)
 	call("GET", "/admin/overview", "", admin, nil, 200)
 	call("POST", "/admin/groups", `{"name":"审批成员","description":"","permissions":["approvals.access"]}`, admin, nil, 200)
-	call("POST", "/admin/accounts", `{"username":"member","name":"成员","password":"temporary-password","active":true,"groupIds":[1]}`, admin, nil, 200)
+	call("POST", "/admin/accounts", `{"username":"member","name":"成员","password":"","active":true,"groupIds":[1]}`, admin, nil, 400)
+	call("POST", "/admin/accounts", `{"username":"member","name":"成员","password":"123","active":true,"groupIds":[1]}`, admin, nil, 200)
 	call("POST", "/admin/teams", `{"name":"北区项目","kind":"project","memberIds":[2],"adminIds":[1]}`, admin, nil, 400)
 	call("POST", "/admin/teams", `{"name":"北区项目","kind":"project","memberIds":[2],"adminIds":[2]}`, admin, nil, 200)
 	call("PUT", "/admin/modules/approvals/admins", `{"adminIds":[1]}`, admin, nil, 200)
@@ -99,20 +100,21 @@ func TestOrganizationAccess(t *testing.T) {
 		}
 		return map[string]string{"Authorization": "Bearer " + result.Data.Token, "Origin": desktopOrigin}
 	}
-	member := memberLogin("temporary-password")
+	member := memberLogin("123")
 	call("GET", "/admin/overview", "", nil, member, 403)
-	call("PUT", "/auth/password", `{"current":"temporary-password","next":"replacement-password"}`, nil, member, 200)
-	call("GET", "/auth/session", "", nil, member, 401)
-	member = memberLogin("replacement-password")
 	_, data := call("GET", "/auth/session", "", nil, member, 200)
 	var session struct{ Data organization.Identity }
 	if err := json.Unmarshal(data, &session); err != nil {
 		t.Fatal(err)
 	}
-	if len(session.Data.Permissions) != 1 || session.Data.Permissions[0] != "approvals.access" ||
+	if session.Data.MustChangePassword || len(session.Data.Permissions) != 1 || session.Data.Permissions[0] != "approvals.access" ||
 		len(session.Data.Teams) != 1 || !session.Data.Teams[0].Admin || len(session.Data.Modules) != 0 {
-		t.Fatalf("团队和模块权限范围错误：%+v", session.Data)
+		t.Fatalf("首次登录的会话或权限范围错误：%+v", session.Data)
 	}
+	call("PUT", "/auth/password", `{"current":"123","next":"456"}`, nil, member, 400)
+	call("PUT", "/auth/password", `{"current":"123","next":"replacement-password"}`, nil, member, 200)
+	call("GET", "/auth/session", "", nil, member, 401)
+	member = memberLogin("replacement-password")
 	call("PUT", "/admin/modules/approvals/admins", `{"adminIds":[2]}`, nil, member, 403)
 	call("GET", "/chat/conversations", "", nil, member, 403)
 	call("PUT", "/admin/groups/1", `{"name":"审批成员","permissions":["approvals.access","chat.access"]}`, admin, nil, 200)
@@ -153,13 +155,13 @@ func TestOrganizationAccess(t *testing.T) {
 	call("POST", "/admin/accounts", `{"username":"outsider","name":"其他人","password":"temporary-password","active":true,"groupIds":[1]}`, admin, nil, 200)
 	res, _ = call("POST", "/auth/login", `{"username":"outsider","password":"temporary-password"}`, nil, nil, 200)
 	outsider := res.Cookies()[0]
-	call("GET", thread+"/messages", "", outsider, nil, 403)
-	call("PUT", "/auth/password", `{"current":"temporary-password","next":"replacement-password"}`, outsider, nil, 200)
-	res, _ = call("POST", "/auth/login", `{"username":"outsider","password":"replacement-password"}`, nil, nil, 200)
-	outsider = res.Cookies()[0]
 	call("GET", thread+"/messages", "", outsider, nil, 404)
 	call("POST", thread+"/messages", send, outsider, nil, 404)
 	call("PUT", thread+"/read", `{"messageId":1}`, outsider, nil, 404)
+	call("PUT", "/admin/accounts/2", `{"name":"成员","active":true,"password":"x","groupIds":[1]}`, admin, nil, 200)
+	call("GET", "/auth/session", "", nil, member, 401)
+	member = memberLogin("x")
+	call("GET", thread+"/messages", "", nil, member, 200)
 	call("PUT", "/admin/accounts/2", `{"name":"成员","active":false,"groupIds":[1]}`, admin, nil, 200)
 	call("PUT", "/admin/accounts/2", `{"name":"成员","active":true,"groupIds":[1]}`, admin,
 		map[string]string{"X-ZwOA-Revision": strconv.FormatInt(revision-1, 10)}, 412)

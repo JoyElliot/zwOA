@@ -174,7 +174,7 @@ func (s *Store) SaveAccount(ctx context.Context, id, revision int64, input Accou
 	if !validName(name) || (id == 0 && !usernamePattern.MatchString(username)) || !validIDs(input.GroupIDs) {
 		return ErrInvalid
 	}
-	if (id == 0 || input.Password != "") && !validPassword(input.Password) {
+	if (id == 0 && input.Password == "") || len(input.Password) > 256 {
 		return ErrInvalid
 	}
 	var hash string
@@ -187,8 +187,8 @@ func (s *Store) SaveAccount(ctx context.Context, id, revision int64, input Accou
 	}
 	return s.mutate(ctx, revision, func(tx *sql.Tx) error {
 		if id == 0 {
-			err := tx.QueryRowContext(ctx, `INSERT INTO accounts(username, name, password_hash, active)
-				VALUES (?, ?, ?, ?) RETURNING id`, username, name, hash, input.Active).Scan(&id)
+			err := tx.QueryRowContext(ctx, `INSERT INTO accounts(username, name, password_hash, active, must_change_password)
+				VALUES (?, ?, ?, ?, 0) RETURNING id`, username, name, hash, input.Active).Scan(&id)
 			if err != nil {
 				return err
 			}
@@ -208,7 +208,7 @@ func (s *Store) SaveAccount(ctx context.Context, id, revision int64, input Accou
 				return err
 			}
 			if hash != "" {
-				if _, err := tx.ExecContext(ctx, `UPDATE accounts SET password_hash = ?, must_change_password = 1 WHERE id = ?`, hash, id); err != nil {
+				if _, err := tx.ExecContext(ctx, `UPDATE accounts SET password_hash = ?, must_change_password = 0 WHERE id = ?`, hash, id); err != nil {
 					return err
 				}
 			}
