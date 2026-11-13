@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router';
 import { AppHeader, type ThemeControls } from '../../shared/ui/AppHeader';
 import { errorMessage } from '../../shared/api/client';
 import { changePassword, login } from './api';
-import { announceSignIn, endSession, refreshSession, type Session } from './session';
+import { announceSignIn, refreshSession, type Session } from './session';
 import './auth.css';
 
 export function AuthLayout({ theme, children }: { theme: ThemeControls; children: React.ReactNode }) {
@@ -74,7 +74,6 @@ export function PasswordPage({ required }: { required: boolean }) {
     setError('');
     try {
       await changePassword({ current: values.current, next: values.next });
-      await endSession();
       if (!required) void navigate('/', { replace: true });
     } catch (cause) {
       setError(errorMessage(cause));

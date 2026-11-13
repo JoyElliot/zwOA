@@ -1,31 +1,37 @@
-use std::sync::Mutex;
+mod credentials;
+
+use credentials::DesktopSession;
 use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
-#[derive(Default)]
-struct DesktopSession(Mutex<Option<String>>);
-
 #[tauri::command]
-fn desktop_session(state: State<'_, DesktopSession>) -> Result<Option<String>, String> {
-    state
-        .0
-        .lock()
-        .map(|token| token.clone())
-        .map_err(|_| "无法读取桌面会话".into())
+fn desktop_session(
+    state: State<'_, DesktopSession>,
+    scope: String,
+) -> Result<Option<String>, String> {
+    state.read(&scope)
 }
 
 #[tauri::command]
 fn set_desktop_session(
     state: State<'_, DesktopSession>,
-    token: Option<String>,
+    scope: String,
+    token: String,
 ) -> Result<(), String> {
-    let mut session = state.0.lock().map_err(|_| "无法更新桌面会话")?;
-    *session = token;
-    Ok(())
+    state.store(&scope, &token)
 }
 
 #[tauri::command]
-async fn open_admin(app: AppHandle, caller: WebviewWindow) -> Result<(), String> {
-    if caller.label() != "main" || desktop_session(app.state())?.is_none() {
+fn clear_desktop_session(
+    state: State<'_, DesktopSession>,
+    scope: String,
+    token: String,
+) -> Result<bool, String> {
+    state.clear_if_current(&scope, &token)
+}
+
+#[tauri::command]
+async fn open_admin(app: AppHandle, caller: WebviewWindow, scope: String) -> Result<(), String> {
+    if caller.label() != "main" || app.state::<DesktopSession>().read(&scope)?.is_none() {
         return Err("请先登录工作台".into());
     }
     if let Some(window) = app.get_webview_window("admin") {
@@ -53,6 +59,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             desktop_session,
             set_desktop_session,
+            clear_desktop_session,
             open_admin
         ])
         .run(tauri::generate_context!())

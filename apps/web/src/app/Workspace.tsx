@@ -5,9 +5,8 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, Route, Routes, useMatch, useNavigate } from 'react-router';
 import { Brand, ThemeToggle, type ThemeControls } from '../shared/ui/AppHeader';
 import { WorkspaceTitlebar } from '../shared/ui/DesktopTitlebar';
-import { signOut } from '../features/auth/session';
-import { desktop, errorMessage } from '../shared/api/client';
-import type { Identity } from '../features/auth/api';
+import { logout, type Identity } from '../features/auth/api';
+import { desktop, desktopSessionScope, errorMessage } from '../shared/api/client';
 import { getWorkbenchOverview, type WorkbenchOverview } from '../features/workbench/api';
 import { ModulePage, Workbench } from '../features/workbench/Workbench';
 import { modules } from '../features/workbench/modules';
@@ -51,7 +50,7 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
           ))}
           {identity.superAdmin && (desktop ? (
             <button type="button" aria-label="管理面板" title="管理面板"
-              onClick={() => void invoke('open_admin').catch(() => setActionError('无法打开管理窗口，请重试。'))}>
+              onClick={() => void invoke('open_admin', { scope: desktopSessionScope }).catch(() => setActionError('无法打开管理窗口，请重试。'))}>
               <SettingOutlined /><span className="workspace-nav-label">管理面板</span>
             </button>
           ) : (
@@ -66,7 +65,7 @@ export function Workspace({ theme, identity }: { theme: ThemeControls; identity:
             { key: 'logout', label: '退出登录' },
           ], onClick: ({ key }) => {
             if (key === 'password') void navigate('/account/password');
-            else void signOut().catch((error: unknown) => setActionError(errorMessage(error)));
+            else void logout().catch((error: unknown) => setActionError(errorMessage(error)));
           } }}>
             <Button type="text" icon={<UserOutlined />} className="account-trigger" aria-label={identity.name} title={identity.name}>
               <span className="account-name">{identity.name}</span>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ApiError, errorMessage, setDesktopToken } from '../../shared/api/client';
-import { getIdentity, logout, type Identity } from './api';
+import { ApiError, errorMessage, sessionChangedEvent } from '../../shared/api/client';
+import { getIdentity, type Identity } from './api';
 
 export type Session =
   | { status: 'loading' | 'signed-out' }
@@ -23,7 +23,7 @@ export function useSession() {
         const identity = await getIdentity(controller.signal);
         if (!controller.signal.aborted) setSession({ status: 'ready', identity });
       } catch (error) {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted || (error instanceof DOMException && error.name === 'AbortError')) return;
         if (error instanceof ApiError && error.status === 401) {
           setSession({ status: 'signed-out' });
         } else {
@@ -32,42 +32,26 @@ export function useSession() {
       }
     }
 
-    function clear() {
-      current?.abort();
-      setSession({ status: 'signed-out' });
-    }
-
-    function sync(event: MessageEvent) {
-      if (event.data === 'signed-out') clear();
-      else void refresh();
+    function notifyWindows() {
+      void refresh();
+      sessionEvents.postMessage('refresh');
     }
 
     void refresh();
     window.addEventListener('focus', refresh);
-    window.addEventListener('zwoa-session-expired', clear);
+    window.addEventListener(sessionChangedEvent, notifyWindows);
     window.addEventListener('zwoa-session-refresh', refresh);
-    sessionEvents.addEventListener('message', sync);
+    sessionEvents.addEventListener('message', refresh);
     return () => {
       current?.abort();
       window.removeEventListener('focus', refresh);
-      window.removeEventListener('zwoa-session-expired', clear);
+      window.removeEventListener(sessionChangedEvent, notifyWindows);
       window.removeEventListener('zwoa-session-refresh', refresh);
-      sessionEvents.removeEventListener('message', sync);
+      sessionEvents.removeEventListener('message', refresh);
     };
   }, []);
 
   return session;
-}
-
-export async function endSession() {
-  await setDesktopToken(null);
-  window.dispatchEvent(new Event('zwoa-session-expired'));
-  sessionEvents.postMessage('signed-out');
-}
-
-export async function signOut() {
-  await logout();
-  await endSession();
 }
 
 export function refreshSession() {
@@ -75,6 +59,5 @@ export function refreshSession() {
 }
 
 export function announceSignIn() {
-  refreshSession();
-  sessionEvents.postMessage('signed-in');
+  window.dispatchEvent(new Event(sessionChangedEvent));
 }
