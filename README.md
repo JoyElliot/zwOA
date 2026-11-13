@@ -2,7 +2,7 @@
 
 zwOA 是面向公司内部使用的办公与客户管理平台。本项目为公开可见的闭源项目。
 
-当前可运行工作台、模块导航和后端连接状态。客户管理、办公审批、组织与权限已经划分页面入口，业务接口、登录和数据持久化待接入。
+当前可运行登录、工作台和独立管理面板。超级管理员可以创建账户、配置权限组、设置团队与项目成员，以及分别分配团队和模块管理员。客户管理和办公审批的业务流程待接入。
 
 ## 项目结构
 
@@ -11,6 +11,7 @@ zwOA 是面向公司内部使用的办公与客户管理平台。本项目为公
 | `cmd/api` | GoFrame API 进程入口 |
 | `internal/platform/httpserver` | HTTP 配置、健康检查和跨域策略 |
 | `internal/modules/workbench` | 工作台业务接口 |
+| `internal/modules/organization` | 账户、会话、权限组、团队与项目、模块管理员和 SQLite 数据持久化 |
 | `apps/web` | React、TypeScript、Ant Design 共享界面，供浏览器和桌面端使用 |
 | `apps/desktop` | Tauri 2 桌面窗口和 Windows 构建配置 |
 
@@ -20,24 +21,42 @@ zwOA 是面向公司内部使用的办公与客户管理平台。本项目为公
 
 需要 Go 1.26、Node.js 22.12 或更高版本及 npm。Go 版本由 `go.mod` 声明。
 
-1. 在仓库根目录启动 API。
+1. 在仓库根目录创建首个超级管理员，按提示输入并确认至少 12 个字符的密码。此命令只用于初始化空库。
+
+   ```powershell
+   go run ./cmd/api init-admin admin "系统管理员"
+   ```
+
+2. 在同一目录启动 API。
 
    ```powershell
    go run ./cmd/api
    ```
 
-2. 在另一个终端启动网页。
+3. 在另一个终端启动网页。
 
    ```powershell
    npm --prefix apps/web ci
    npm --prefix apps/web run dev
    ```
 
-3. 打开 `http://127.0.0.1:5273`。页面显示「服务在线」时，表示工作台接口已连通。
+4. 打开 `http://127.0.0.1:5273`，用刚创建的账户登录，再从工作台打开「管理面板」。网页端打开单独标签页，Windows 端打开独立窗口。
+
+默认数据库位于运行账户的配置目录下 `zwOA/zwoa.db`，Windows 上是 `%APPDATA%\zwOA\zwoa.db`。可以通过 `ZWOA_DB_PATH` 指定仅服务账户可访问的文件，初始化和服务启动时须使用同一文件。自动化初始化可以从环境变量 `ZWOA_INIT_ADMIN_PASSWORD` 读取密码，使用后清除变量。数据库和会话由当前 API 实例管理。
 
 API 默认监听 `127.0.0.1:8720`。`GET /healthz` 用于确认进程能处理请求，`GET /api/v1/workbench/overview` 返回系统名称和版本。设置 `ZWOA_ENABLE_OPENAPI=1` 后，可访问 `GET /openapi.json` 查看接口定义。
 
-使用 `ZWOA_API_ADDR` 可调整 API 监听地址。若开发端口改变，用 `ZWOA_DEV_API_TARGET` 指定 Vite 代理目标。Web 生产构建执行 `npm --prefix apps/web run build`，产物在 `apps/web/dist`。部署时可将同源 `/api` 转发到 Go 服务，或构建时用 `VITE_API_BASE_URL` 指定 API 地址。
+使用 `ZWOA_API_ADDR` 可调整 API 监听地址。若开发端口改变，用 `ZWOA_DEV_API_TARGET` 指定 Vite 代理目标。Web 生产构建执行 `npm --prefix apps/web run build`，产物在 `apps/web/dist`。部署网页时通过同源 HTTPS 转发 `/api`，保留原始 `Host`，并在 API 进程设置 `ZWOA_SECURE_COOKIES=1`。
+
+如果通过反向代理接收多位用户的请求，可在 `ZWOA_TRUSTED_PROXIES` 中填入代理连接 API 时使用的 IP，以逗号分隔。配置中的代理必须以实际客户端 IP 覆盖 `X-Real-IP`，用于按来源限制登录尝试。
+
+## 账户与管理权限
+
+新账户使用临时密码登录，首次使用或管理员重置后需要设置新密码。停用账户或修改密码会撤销该账户现有会话。超级管理员通过工作台的账户菜单修改自己的密码。
+
+账户可加入多个权限组，功能模块使用权限取各组的并集。团队管理员必须属于所管理的团队或项目。模块管理员的授权按功能模块记录，可以跨团队使用该模块。系统管理面板仅向超级管理员开放。
+
+后续审批模板可从申请所属项目取得项目管理员，再从目标功能模块取得模块管理员。当前版本支持保存这两类人员关系，流程模板、审批节点和流转记录会随业务功能接入。
 
 ## Windows 桌面端
 
