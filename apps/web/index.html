@@ -4,6 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#fdfdfe" />
+    <style>
+      :root { color-scheme: light dark; background: light-dark(#f2f4f8, #1c1f27); }
+      :root[data-theme="light"] { color-scheme: light; }
+      :root[data-theme="dark"] { color-scheme: dark; }
+    </style>
+    <script>
+      (() => {
+        let selected;
+        try {
+          selected = localStorage.getItem('zwoa-color-theme');
+        } catch {
+          // 存储不可用时使用系统配色。
+        }
+        const dark = selected === 'dark' ||
+          (selected !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#16181e' : '#fdfdfe';
+      })();
+    </script>
     <title>中网联合 OA / CRM</title>
   </head>
   <body>

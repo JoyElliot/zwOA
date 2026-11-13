@@ -5,12 +5,8 @@ type ColorTheme = 'light' | 'dark';
 const storageKey = 'zwoa-color-theme';
 
 function readTheme(): ColorTheme {
-  try {
-    const saved = localStorage.getItem(storageKey);
-    if (saved === 'light' || saved === 'dark') return saved;
-  } catch {
-    // 存储受限时仍可使用系统配色。
-  }
+  const initial = document.documentElement.dataset.theme;
+  if (initial === 'light' || initial === 'dark') return initial;
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
