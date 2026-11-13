@@ -12,7 +12,7 @@ zwOA 是面向公司内部使用的办公与客户管理平台。本项目为公
 | `internal/platform/httpserver` | HTTP 配置、健康检查和跨域策略 |
 | `internal/modules/workbench` | 工作台业务接口 |
 | `apps/web` | React、TypeScript、Ant Design 共享界面，供浏览器和桌面端使用 |
-| `apps/desktop` | Tauri 2 桌面窗口和 Windows 打包配置 |
+| `apps/desktop` | Tauri 2 桌面窗口和 Windows 构建配置 |
 
 后端按业务划分 Go 包，在一个服务进程内运行。后续可在 `internal/modules` 增加 `crm`、`approvals`、`organization`，并通过 `/api/v1` 暴露接口。数据访问与授权应留在后端，客户端共享 HTTP 契约。将来接入 Android 和 iOS 时，可复用 API，并按设备验证交互和平台能力。
 
@@ -55,9 +55,9 @@ npm --prefix apps/desktop run dev
 npm --prefix apps/desktop run build
 ```
 
-发布构建生成 Windows 可执行文件和 NSIS 安装包，位于 `apps/desktop/src-tauri/target/release` 和 `apps/desktop/src-tauri/target/release/bundle/nsis`。本地打包默认连接 `http://127.0.0.1:8720`。部署到公司环境时，用 `VITE_API_BASE_URL` 设置实际的 HTTPS API 地址，并把该来源加入 `apps/desktop/src-tauri/tauri.conf.json` 中的 `connect-src`。
+本地构建生成可直接运行的 `apps/desktop/src-tauri/target/release/zwoa-desktop.exe`，默认连接 `http://127.0.0.1:8720`。部署到公司环境时，用 `VITE_API_BASE_URL` 设置实际的 HTTPS API 地址，并把该来源加入 `apps/desktop/src-tauri/tauri.conf.json` 中的 `connect-src`。
 
-API 使用 `ZWOA_ALLOWED_ORIGINS` 控制跨域来源，以逗号分隔完整的协议、主机和端口。Windows 安装包的 WebView 默认来源为 `http://tauri.localhost`，已包含在本地默认配置中。
+API 使用 `ZWOA_ALLOWED_ORIGINS` 控制跨域来源，以逗号分隔完整的协议、主机和端口。Windows 桌面端的 WebView 默认来源为 `http://tauri.localhost`，已包含在本地默认配置中。
 
 ## 提交约定
 
